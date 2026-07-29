@@ -1,0 +1,6 @@
+TELEGRAM_APP_VERSION = 0.91
+TELEGRAM_APP_NAME = Twelve
+TELEGRAPH_BUNDLE_ID=com.example.Twelvium
+TELEGRAM_APPSTORE_ID = @686449807
+
+#include "Common.xcconfig"

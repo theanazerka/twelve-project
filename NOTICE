@@ -1,0 +1,25 @@
+Twelve / Twelvium
+Copyright (C) 2026 theanazerka
+https://github.com/theanazerka/twelve-project
+
+Twelve is an unofficial Telegram client for iOS 6 based on the official
+Telegram for iOS source code.
+
+Copyright in the original Telegram source code belongs to its respective
+copyright holders. Copyright in third-party components belongs to their
+respective authors.
+
+The original modifications, theme integration, project-specific code and
+project assets contributed to Twelve/Twelvium are Copyright (C) 2026
+theanazerka and are licensed under the GNU General Public License, version 2,
+or (at your option) any later version.
+
+Source redistributions and forks must preserve the applicable copyright and
+license notices. Retain this NOTICE, or reproduce the following equivalent
+attribution in another prominent location within the distributed source:
+
+    Based on Twelve by theanazerka
+    https://github.com/theanazerka/twelve-project
+
+Names and project branding are provided for attribution and do not imply
+endorsement of modified versions.
