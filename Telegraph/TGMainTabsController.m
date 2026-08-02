@@ -375,6 +375,7 @@ static UIImage *TGMainTabsClassicIOS6ResizableImage(NSString *name)
     int _callsCount;
     int _messagesCount;
     UIImageView *_classicIOS6BackgroundView;
+    UIView *_classicIOS6BottomSeamView;
 }
 
 @property (nonatomic, weak) id<TGTabBarDelegate> tabDelegate;
@@ -410,15 +411,21 @@ static UIImage *TGMainTabsClassicIOS6ResizableImage(NSString *name)
     {
         self.multipleTouchEnabled = false;
         self.exclusiveTouch = true;
+        self.opaque = true;
+        self.backgroundColor = [TGPresentation classicIOS6Style] ? UIColorRGB(0x242424) : presentation.pallete.barBackgroundColor;
         
         _presentation = presentation;
         
         _backgroundView = [[UIView alloc] init];
         if ([TGPresentation classicIOS6Style])
         {
+            _backgroundView.opaque = true;
             _backgroundView.backgroundColor = UIColorRGB(0x242424);
             _classicIOS6BackgroundView = [[UIImageView alloc] initWithImage:TGMainTabsClassicIOS6ResizableImage(@"TabBarBackground")];
             [_backgroundView addSubview:_classicIOS6BackgroundView];
+            _classicIOS6BottomSeamView = [[UIView alloc] init];
+            _classicIOS6BottomSeamView.backgroundColor = UIColorRGB(0x242424);
+            [_backgroundView addSubview:_classicIOS6BottomSeamView];
         }
         else
             _backgroundView.backgroundColor = presentation.pallete.barBackgroundColor;
@@ -480,7 +487,18 @@ static UIImage *TGMainTabsClassicIOS6ResizableImage(NSString *name)
             _classicIOS6BackgroundView = [[UIImageView alloc] initWithImage:TGMainTabsClassicIOS6ResizableImage(@"TabBarBackground")];
             [_backgroundView addSubview:_classicIOS6BackgroundView];
         }
+        if (_classicIOS6BottomSeamView == nil)
+        {
+            _classicIOS6BottomSeamView = [[UIView alloc] init];
+            _classicIOS6BottomSeamView.backgroundColor = UIColorRGB(0x242424);
+            [_backgroundView addSubview:_classicIOS6BottomSeamView];
+        }
         _classicIOS6BackgroundView.hidden = false;
+        _classicIOS6BackgroundView.alpha = 1.0f;
+        _classicIOS6BottomSeamView.hidden = false;
+        self.opaque = true;
+        self.backgroundColor = UIColorRGB(0x242424);
+        _backgroundView.opaque = true;
         _backgroundView.backgroundColor = UIColorRGB(0x242424);
         // The original Telegram layout has three tabs; Calls is a newer feature.
         _callsHidden = true;
@@ -491,6 +509,11 @@ static UIImage *TGMainTabsClassicIOS6ResizableImage(NSString *name)
     else
     {
         _classicIOS6BackgroundView.hidden = true;
+        _classicIOS6BottomSeamView.hidden = true;
+        _classicIOS6BackgroundView.alpha = 1.0f;
+        self.opaque = true;
+        self.backgroundColor = presentation.pallete.barBackgroundColor;
+        _backgroundView.opaque = true;
         _backgroundView.backgroundColor = presentation.pallete.barBackgroundColor;
         _stripeView.backgroundColor = presentation.pallete.barSeparatorColor;
     }
@@ -721,6 +744,7 @@ static UIImage *TGMainTabsClassicIOS6ResizableImage(NSString *name)
     _backgroundView.frame = CGRectMake(0, 0, viewSize.width, viewSize.height);
     if (_classicIOS6BackgroundView != nil)
         _classicIOS6BackgroundView.frame = _backgroundView.bounds;
+    _classicIOS6BottomSeamView.frame = CGRectMake(0.0f, MAX(0.0f, viewSize.height - TGScreenPixel), viewSize.width, TGScreenPixel);
     CGFloat stripeHeight = TGScreenPixel;
     _stripeView.frame = CGRectMake(0, [TGPresentation classicIOS6Style] ? 0.0f : -stripeHeight, viewSize.width, stripeHeight);
     

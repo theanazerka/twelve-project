@@ -34,6 +34,12 @@
 
 @end
 
+static NSString *TGGroqApiKeyDefaultsKey(void)
+{
+    int32_t userId = TGTelegraphInstance.clientUserId;
+    return userId != 0 ? [NSString stringWithFormat:@"TGGroqAPIKey.%d", userId] : @"TGGroqAPIKey";
+}
+
 @implementation TGSettingsController
 
 - (id)init
@@ -119,6 +125,7 @@
         TGActionMenuItem *sendDataItem = [[TGActionMenuItem alloc] initWithTitle:@"Send data"];
         sendDataItem.action = @selector(sendDataButtonPressed);
         [miscSection.items addObject:sendDataItem];
+
     }
     return self;
 }
@@ -361,6 +368,37 @@
 }
 
 #pragma mark - Actions
+
+- (void)groqApiKeyButtonPressed
+{
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Groq API key"
+                                                    message:@"The key is stored only on this device and is sent directly to Groq."
+                                                   delegate:self
+                                          cancelButtonTitle:@"Cancel"
+                                          otherButtonTitles:@"Save", nil];
+    alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
+    UITextField *field = [alert textFieldAtIndex:0];
+    field.placeholder = @"gsk_...";
+    field.text = [[NSUserDefaults standardUserDefaults] stringForKey:TGGroqApiKeyDefaultsKey()];
+    [alert show];
+}
+
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (![alertView.title isEqualToString:@"Groq API key"] || buttonIndex != 1)
+        return;
+
+    UITextField *field = [alertView textFieldAtIndex:0];
+    NSString *enteredKey = field.text;
+    if (enteredKey == nil)
+        enteredKey = @"";
+    NSString *key = [[enteredKey stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] copy];
+    if (key.length != 0)
+        [[NSUserDefaults standardUserDefaults] setObject:key forKey:TGGroqApiKeyDefaultsKey()];
+    else
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:TGGroqApiKeyDefaultsKey()];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+}
 
 - (void)logoutButtonPressed
 {

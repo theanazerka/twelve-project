@@ -127,8 +127,8 @@ static void TGModernUserSkipObjectVector(NSInputStream *is, id<TLSerializationEn
     
     object.flags = [is readInt32];
     int32_t flags2 = 0;
-    bool hasModernFlags2 = signature == (int32_t)0x4b46c37e || signature == (int32_t)0xb1b8cc83 || signature == (int32_t)0x31774388 || signature == (int32_t)0x83314fca || signature == (int32_t)0x215c4438 || signature == (int32_t)0x2813e6db || signature == (int32_t)0x1afeb7ac || signature == (int32_t)0xd0a1d008;
-    bool isModernLongUser = signature == (int32_t)0x4b46c37e || signature == (int32_t)0xb1b8cc83 || signature == (int32_t)0x31774388 || signature == (int32_t)0x83314fca || signature == (int32_t)0x215c4438 || signature == (int32_t)0x2813e6db || signature == (int32_t)0x1afeb7ac || signature == (int32_t)0xd0a1d008;
+    bool hasModernFlags2 = signature == (int32_t)0x4b46c37e || signature == (int32_t)0xb1b8cc83 || signature == (int32_t)0x31774388 || signature == (int32_t)0x83314fca || signature == (int32_t)0x215c4438 || signature == (int32_t)0x2813e6db || signature == (int32_t)0x1afeb7ac || signature == (int32_t)0xd0a1d008 || signature == (int32_t)0xd7c0ff9c;
+    bool isModernLongUser = signature == (int32_t)0x4b46c37e || signature == (int32_t)0xb1b8cc83 || signature == (int32_t)0x31774388 || signature == (int32_t)0x83314fca || signature == (int32_t)0x215c4438 || signature == (int32_t)0x2813e6db || signature == (int32_t)0x1afeb7ac || signature == (int32_t)0xd0a1d008 || signature == (int32_t)0xd7c0ff9c;
     if (hasModernFlags2)
         flags2 = [is readInt32];
     

@@ -151,7 +151,16 @@ static bool isEmojiCharacter(NSString *singleChar)
 - (void)loadSavedMessagesWithSize:(CGSize)size placeholder:(UIImage *)placeholder
 {
     _label.text = @"";
-    
+
+    NSString *path = [[NSBundle mainBundle] pathForResource:@"TwelviumSavedMessagesAvatar" ofType:@"png" inDirectory:@"ClassicIOS6"];
+    UIImage *savedMessagesAvatar = path.length == 0 ? nil : [UIImage imageWithContentsOfFile:path];
+    if (savedMessagesAvatar != nil)
+    {
+        [super loadImage:savedMessagesAvatar];
+        _label.hidden = true;
+        return;
+    }
+
     NSString *placeholderUri = [[NSString alloc] initWithFormat:@"placeholder://?type=saved-messages&w=%d&h=%d" PRId32 "", (int)size.width, (int)size.height];
     if (!TGStringCompare([self currentUrl], placeholderUri))
         [super loadImage:placeholderUri filter:nil placeholder:placeholder];
@@ -227,6 +236,9 @@ typedef struct
 - (void)layoutSubviews
 {
     [super layoutSubviews];
+
+    bool classicIOS6Style = [[NSUserDefaults standardUserDefaults] boolForKey:@"TGClassicIOS6Style"];
+    self.layer.cornerRadius = classicIOS6Style ? 7.0f : MIN(self.bounds.size.width, self.bounds.size.height) / 2.0f;
     
     CGSize labelSize = _label.frame.size;
     CGSize boundsSize = self.bounds.size;

@@ -115,15 +115,13 @@
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^
     {
         NSString *filePath = nil;
-        if ([document.mimeType isEqualToString:@"video/mp4"]) {
-            if (document.localDocumentId != 0)
-            {
-                filePath = [[TGPreparedLocalDocumentMessage localDocumentDirectoryForLocalDocumentId:document.localDocumentId version:document.version] stringByAppendingPathComponent:[document safeFileName]];
-            }
-            else
-            {
-                filePath = [[TGPreparedLocalDocumentMessage localDocumentDirectoryForDocumentId:document.documentId version:document.version] stringByAppendingPathComponent:[document safeFileName]];
-            }
+        if (document.localDocumentId != 0)
+        {
+            filePath = [[TGPreparedLocalDocumentMessage localDocumentDirectoryForLocalDocumentId:document.localDocumentId version:document.version] stringByAppendingPathComponent:[document safeFileName]];
+        }
+        else if (document.documentId != 0)
+        {
+            filePath = [[TGPreparedLocalDocumentMessage localDocumentDirectoryForDocumentId:document.documentId version:document.version] stringByAppendingPathComponent:[document safeFileName]];
         }
         
         bool exists = [[NSFileManager defaultManager] fileExistsAtPath:filePath];

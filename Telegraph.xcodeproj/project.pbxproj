@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A314366525BADC0D00000001 /* ZikfolvStatusBadge@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A314366525BADC0D00000002 /* ZikfolvStatusBadge@2x.png */; };
 		09034EB71EE08B5F006997DB /* ModernContactListBroadcastIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 09034EB41EE08B5E006997DB /* ModernContactListBroadcastIcon@3x.png */; };
 		09034EB81EE08B5F006997DB /* ModernContactListCreateGroupIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 09034EB51EE08B5F006997DB /* ModernContactListCreateGroupIcon@3x.png */; };
 		09034EB91EE08B5F006997DB /* ModernContactListCreateSecretChatIcon@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = 09034EB61EE08B5F006997DB /* ModernContactListCreateSecretChatIcon@3x.png */; };
@@ -1245,7 +1246,6 @@
 		68B63D371BB25B1F00205AC3 /* TGBridgeLocationHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 68B63D1D1BB25B1F00205AC3 /* TGBridgeLocationHandler.m */; };
 		68B63D391BB25B1F00205AC3 /* TGBridgeMediaHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 68B63D1F1BB25B1F00205AC3 /* TGBridgeMediaHandler.m */; };
 		68B63D3B1BB25B1F00205AC3 /* TGBridgePeerSettingsHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 68B63D211BB25B1F00205AC3 /* TGBridgePeerSettingsHandler.m */; };
-		68B63D3D1BB25B1F00205AC3 /* TGBridgeRemoteHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 68B63D231BB25B1F00205AC3 /* TGBridgeRemoteHandler.m */; };
 		68B63D3F1BB25B1F00205AC3 /* TGBridgeSendMessageHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 68B63D251BB25B1F00205AC3 /* TGBridgeSendMessageHandler.m */; };
 		68B63D411BB25B1F00205AC3 /* TGBridgeStateHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 68B63D271BB25B1F00205AC3 /* TGBridgeStateHandler.m */; };
 		68B63D431BB25B1F00205AC3 /* TGBridgeStickersHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 68B63D291BB25B1F00205AC3 /* TGBridgeStickersHandler.m */; };
@@ -5482,6 +5482,7 @@
 		0978FEE41E92D15100F76E38 /* TGInputAccessoryView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TGInputAccessoryView.h; sourceTree = "<group>"; };
 		0978FEE51E92D15100F76E38 /* TGInputAccessoryView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TGInputAccessoryView.m; sourceTree = "<group>"; };
 		0978FEE81E93C5B600F76E38 /* ModernConversationSend@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ModernConversationSend@2x.png"; path = "Resources/ModernConversationSend@2x.png"; sourceTree = "<group>"; };
+		A314366525BADC0D00000002 /* ZikfolvStatusBadge@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ZikfolvStatusBadge@2x.png"; path = "Resources/ZikfolvStatusBadge@2x.png"; sourceTree = "<group>"; };
 		0978FEE91E93C5B600F76E38 /* ModernConversationSend@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "ModernConversationSend@3x.png"; path = "Resources/ModernConversationSend@3x.png"; sourceTree = "<group>"; };
 		097A39B11F8C518B00EC3DA9 /* TGMusicUtils.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TGMusicUtils.h; sourceTree = "<group>"; };
 		097A39B21F8C518B00EC3DA9 /* TGMusicUtils.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TGMusicUtils.m; sourceTree = "<group>"; };
@@ -6953,8 +6954,6 @@
 		68B63D1F1BB25B1F00205AC3 /* TGBridgeMediaHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TGBridgeMediaHandler.m; sourceTree = "<group>"; };
 		68B63D201BB25B1F00205AC3 /* TGBridgePeerSettingsHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TGBridgePeerSettingsHandler.h; sourceTree = "<group>"; };
 		68B63D211BB25B1F00205AC3 /* TGBridgePeerSettingsHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TGBridgePeerSettingsHandler.m; sourceTree = "<group>"; };
-		68B63D221BB25B1F00205AC3 /* TGBridgeRemoteHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TGBridgeRemoteHandler.h; sourceTree = "<group>"; };
-		68B63D231BB25B1F00205AC3 /* TGBridgeRemoteHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TGBridgeRemoteHandler.m; sourceTree = "<group>"; };
 		68B63D241BB25B1F00205AC3 /* TGBridgeSendMessageHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TGBridgeSendMessageHandler.h; sourceTree = "<group>"; };
 		68B63D251BB25B1F00205AC3 /* TGBridgeSendMessageHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TGBridgeSendMessageHandler.m; sourceTree = "<group>"; };
 		68B63D261BB25B1F00205AC3 /* TGBridgeStateHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TGBridgeStateHandler.h; sourceTree = "<group>"; };
@@ -13857,8 +13856,6 @@
 				68B63D1F1BB25B1F00205AC3 /* TGBridgeMediaHandler.m */,
 				68B63D201BB25B1F00205AC3 /* TGBridgePeerSettingsHandler.h */,
 				68B63D211BB25B1F00205AC3 /* TGBridgePeerSettingsHandler.m */,
-				68B63D221BB25B1F00205AC3 /* TGBridgeRemoteHandler.h */,
-				68B63D231BB25B1F00205AC3 /* TGBridgeRemoteHandler.m */,
 				68B63D241BB25B1F00205AC3 /* TGBridgeSendMessageHandler.h */,
 				68B63D251BB25B1F00205AC3 /* TGBridgeSendMessageHandler.m */,
 				68B63D261BB25B1F00205AC3 /* TGBridgeStateHandler.h */,
@@ -19902,8 +19899,6 @@
 				D07041FB15891CEF008AA657 /* External */,
 				D08805B6156E8F3600311537 /* Telegraph */,
 				D02601D81A55CA2300716290 /* Share */,
-				68744C361BB1AA0600FE6542 /* Watch */,
-				D020FADE1D99466A00F279AA /* SiriIntents */,
 				D020FB0B1D99637200F279AA /* LegacyDatabase */,
 				099120C21EEAA63400F1366E /* Widget */,
 				D08805AF156E8F3600311537 /* Frameworks */,
@@ -19916,9 +19911,6 @@
 			children = (
 				D08805AC156E8F3600311537 /* Telegram.app */,
 				D02601D71A55CA2300716290 /* Share.appex */,
-				68744C0D1BB1A9F700FE6542 /* watchkitapp.app */,
-				68744C191BB1A9F700FE6542 /* watchkitapp Extension.appex */,
-				D020FADD1D99466A00F279AA /* SiriIntents.appex */,
 				D020FB0A1D99637100F279AA /* libLegacyDatabase.a */,
 				099120C01EEAA63400F1366E /* Widget.appex */,
 			);
@@ -20456,6 +20448,7 @@
 				0937A59C1E9678F00093D4DA /* TempAudioPreviewPlay@2x.png */,
 				0937A59D1E9678F00093D4DA /* TempAudioPreviewPlay@3x.png */,
 				0978FEE81E93C5B600F76E38 /* ModernConversationSend@2x.png */,
+				A314366525BADC0D00000002 /* ZikfolvStatusBadge@2x.png */,
 				0978FEE91E93C5B600F76E38 /* ModernConversationSend@3x.png */,
 				0978FED41E927E0800F76E38 /* VideoMessagePlaceholder.jpg */,
 				09E0997B1E85877500253536 /* VideoMessageShadow@2x.png */,
@@ -21040,7 +21033,6 @@
 				D09C751519F1C78600BF51BC /* Username */,
 				D0EFBEB11A1A116900FF33C3 /* Phone Number */,
 				D0EDACD51C8CB16E0021B80F /* About */,
-				684853EC1C1B57AD00007D21 /* Watch */,
 				D084D4651A39C94500EA8120 /* FAQ */,
 				9389BC3318D8FFF900F9C1A6 /* Debug */,
 				D00D03361E0D71670000B005 /* Network Usage */,
@@ -23115,7 +23107,6 @@
 				D01160C41F41F1320039383E /* TLRPCupload_saveFilePart.h in Headers */,
 				09D8EEB41EA916CB00CC3AEB /* TGGLVideoView.h in Headers */,
 				092407A91FF1AD6800C9DF0A /* TGAppearanceColorCollectionItem.h in Headers */,
-				68535EE21C4F8D72001821D9 /* TGWatchReplyCollectionItem.h in Headers */,
 				D09DB3D91DCCB63A00D1533A /* TGGroupsInCommonController.h in Headers */,
 				D0115E941F41F12F0039383E /* TLMetaSchemeData.h in Headers */,
 				681EF7701D11C5B700B0DC38 /* TGPIPAblePlayerView.h in Headers */,
@@ -23174,7 +23165,6 @@
 				D0249B331ABF5B210076ECBF /* TGICloudFileDownloadActor.h in Headers */,
 				D060B7891CF5DACA0050BE9B /* TGDatabaseInterface.h in Headers */,
 				D01160501F41F1310039383E /* TLRPCmessages_restoreMessages.h in Headers */,
-				68535EF01C4F8D82001821D9 /* TGWatchReplyCollectionItemView.h in Headers */,
 				D0115FD41F41F1310039383E /* TLRPClangpack_getLanguages.h in Headers */,
 				D05DE80A1AB8847500293D10 /* TGModernConversationForwardInputPanel.h in Headers */,
 				D011629C1F41F1350039383E /* TLMessage.h in Headers */,
@@ -23914,7 +23904,6 @@
 				D01BAA741ED4823400295217 /* TGChannelAdminLogEntry.h in Headers */,
 				D0115F381F41F1300039383E /* TLRPCauth_resetAccountPassword.h in Headers */,
 				09218DB720F87D7100B549AE /* TGUpdateAppController.h in Headers */,
-				684853EF1C1B580E00007D21 /* TGWatchController.h in Headers */,
 				D01160E41F41F1320039383E /* TLTopPeer.h in Headers */,
 				D09519E41D4A4FDA008CE27F /* TGConfirmationCodeData.h in Headers */,
 				D051AF051AF3BEB1003AFD52 /* TGStickerCollectionViewCell.h in Headers */,
@@ -24852,9 +24841,6 @@
 							com.apple.SafariKeychain = {
 								enabled = 1;
 							};
-							com.apple.Siri = {
-								enabled = 1;
-							};
 							com.apple.iCloud = {
 								enabled = 1;
 							};
@@ -24910,9 +24896,6 @@
 			targets = (
 				D08805AB156E8F3600311537 /* Telegraph */,
 				D02601D61A55CA2300716290 /* Share */,
-				68744C0C1BB1A9F700FE6542 /* watchkitapp */,
-				68744C181BB1A9F700FE6542 /* watchkitapp Extension */,
-				D020FADC1D99466A00F279AA /* SiriIntents */,
 				D020FB091D99637100F279AA /* LegacyDatabase */,
 				099120BF1EEAA63400F1366E /* Widget */,
 			);
@@ -25134,6 +25117,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A314366525BADC0D00000001 /* ZikfolvStatusBadge@2x.png in Resources */,
 				C0D6A0012026072000000001 /* ClassicIOS6 in Resources */,
 				D02660321F34A5D5000E2DC5 /* LegacyComponentsResources.bundle in Resources */,
 				D0E352751E5E4127007E6EB8 /* stp_card_discover@2x.png in Resources */,
@@ -25227,7 +25211,6 @@
 				D0AFDA6F1BCFFF3700B74DB4 /* SharedMediaEmptyMusicIcon@3x.png in Resources */,
 				930808CB185A295900E62B42 /* ModernNavigationComposeButtonIcon@2x.png in Resources */,
 				934D715917AD906D0099858D /* 9.m4a in Resources */,
-				09E97B751F97E63B00526020 /* SettingsWatchIcon@3x.png in Resources */,
 				933AA4EE1861348D000AA848 /* ModernTourButtonRightArrow@2x.png in Resources */,
 				D0C925C3194A024000E629CA /* powerful_infinity@2x.png in Resources */,
 				D055A7DE1A68474C00A1D48C /* SharedMediaGenericIcon@2x.png in Resources */,
@@ -25349,7 +25332,6 @@
 				D0C6AF4E1A77F7EF0046833D /* SharedMediaEmptyIcon.png in Resources */,
 				09FAA0B81F434DDC0099E8E7 /* StickersGroupSettings@2x.png in Resources */,
 				09FAA0C51F4361460099E8E7 /* StickersGroupCross@3x.png in Resources */,
-				D0C7B9D31D9D869F00EC75FA /* AppIntentVocabulary.plist in Resources */,
 				09361CF01E7260BF007ED29C /* SearchBarIconLight@3x.png in Resources */,
 				D0E6EE741E5CA236002E89D1 /* currencies.json in Resources */,
 				D02550561B3C75DA005F105A /* VolumeControlVolumeIcon@3x.png in Resources */,
@@ -25434,7 +25416,6 @@
 				932E00E4184AA1100001D109 /* ModernConversationActionDelete@2x.png in Resources */,
 				D0E3528B1E5E4127007E6EB8 /* stp_card_mastercard@3x.png in Resources */,
 				D0DAA481197495A80036E709 /* Icon-72.png in Resources */,
-				D0C7B9BF1D9D822600EC75FA /* AppIntentVocabulary.plist in Resources */,
 				0937A5A41E9678F00093D4DA /* TempAudioPreviewPlay@2x.png in Resources */,
 				68D704A71C5BDF6100F25436 /* MusicPlayerControlRepeat@2x.png in Resources */,
 				09498C321F7186E100EB9E4D /* MusicPlayerArrow@3x.png in Resources */,
@@ -25446,7 +25427,6 @@
 				D06989BA1BA7077B000CBE06 /* ConversationInputFieldBroadcastIconInactive@2x.png in Resources */,
 				09B5B9B31E79A83700195236 /* DeleteWhiteIcon@3x.png in Resources */,
 				936219E2186460F600C52870 /* 102.m4a in Resources */,
-				D0C7B9D61D9D86A700EC75FA /* AppIntentVocabulary.plist in Resources */,
 				D089E0A61AC5B6E9009A744B /* AuthSessionsEmptyIcon@3x.png in Resources */,
 				093134BA20A1E3B3003045EE /* PassportScan@2x.png in Resources */,
 				D0D17F0F1CB4102A00C4750B /* botbutton_phone@2x.png in Resources */,
@@ -25458,7 +25438,6 @@
 				D061F2881A928F580031BCBE /* CameraFlipButton.png in Resources */,
 				68D68B0C1C9C3A7E0016F742 /* EmbedScaleToFitLetterboxButton@2x.png in Resources */,
 				932E00E5184AA1100001D109 /* ModernConversationActionForward@2x.png in Resources */,
-				D0C7B9DC1D9D86B500EC75FA /* AppIntentVocabulary.plist in Resources */,
 				D069B1B71B3D94110034C967 /* MusicPlayerMinimizedPlay@2x.png in Resources */,
 				932E00FC184BFACE0001D109 /* ModernMessageContactAdd_Incoming@2x.png in Resources */,
 				D0E3525D1E5E4127007E6EB8 /* stp_card_amex@2x.png in Resources */,
@@ -25467,7 +25446,6 @@
 				D0D443B8195315D500CF2A7E /* Icon-76@2x.png in Resources */,
 				D0E3527E1E5E4127007E6EB8 /* stp_card_form_back@2x.png in Resources */,
 				09377FB11E96F1B300294935 /* VideoMessagePIPShadow@3x.png in Resources */,
-				D0C7B9CA1D9D868100EC75FA /* AppIntentVocabulary.plist in Resources */,
 				09CBD37F1F96E9A100A8656F /* MusicPlayerControlReverse@3x.png in Resources */,
 				68521C861BCE80A100B8A6FA /* MediaLocation@2x.png in Resources */,
 				D0249B031ABCAC280076ECBF /* FileHowToScheme@2x.png in Resources */,
@@ -25478,7 +25456,6 @@
 				0923C0C91F39B0D000AC41C9 /* StickersFaved@2x.png in Resources */,
 				091B28451E6D70B0008565E4 /* CallQuickMessageIcon@2x.png in Resources */,
 				D02550591B3C75DA005F105A /* MusicPlayerControlPlay@2x.png in Resources */,
-				D0C7B9D01D9D869700EC75FA /* AppIntentVocabulary.plist in Resources */,
 				D06989B81BA7077B000CBE06 /* ConversationInputFieldBroadcastIconActive@2x.png in Resources */,
 				D0E3527C1E5E4127007E6EB8 /* stp_card_form_applepay@3x.png in Resources */,
 				D0C925B7194A024000E629CA /* ic_bubble_dot@2x.png in Resources */,
@@ -25487,7 +25464,6 @@
 				D0C925BD194A024000E629CA /* ic_smile@2x.png in Resources */,
 				09C0BF3E206E851300380399 /* PassportForgetIcon@2x.png in Resources */,
 				D0C925B5194A024000E629CA /* fast_spiral@2x.png in Resources */,
-				684853D41C19F71D00007D21 /* SettingsWatchIcon@2x.png in Resources */,
 				68CEA6E81E089F110019EC79 /* CallStar_Highlighted@2x.png in Resources */,
 				093FD0BE209C950D003C451A /* PassportPassport@2x.png in Resources */,
 				D07FD9E218CBA6CA009B649E /* InfoPlist.strings in Resources */,
@@ -25496,7 +25472,6 @@
 				934D715517AD8FB50099858D /* 6.m4a in Resources */,
 				68D68B0B1C9C3A7E0016F742 /* EmbedScaleToFillLetterboxButton@2x.png in Resources */,
 				09034EB71EE08B5F006997DB /* ModernContactListBroadcastIcon@3x.png in Resources */,
-				D0C7B9D91D9D86AF00EC75FA /* AppIntentVocabulary.plist in Resources */,
 				D069B1BA1B3D94110034C967 /* MusicPlayerMinimizedClose@2x.png in Resources */,
 				0915605C1F70006B007F77C4 /* MusicPlayerSmallAlbumArtPlaceholder@3x.png in Resources */,
 				09C0BF3F206E851300380399 /* PassportForgetIcon@3x.png in Resources */,
@@ -25703,7 +25678,6 @@
 				68EE34741C84A772002F5419 /* ShareCommentCloseIcon@2x.png in Resources */,
 				09BC509920C9AF4F00B28F9D /* anim_read.json in Resources */,
 				0973F3601F90E0F100EE2749 /* ConversationGoToIcon@2x.png in Resources */,
-				09A833621FF4531500FB133D /* AppIntentVocabulary.plist in Resources */,
 				936219DA186460F600C52870 /* 109.m4a in Resources */,
 				0937A5A31E9678F00093D4DA /* TempAudioPreviewPause@3x.png in Resources */,
 				D0E352791E5E4127007E6EB8 /* stp_card_discover_template@3x.png in Resources */,
@@ -25746,7 +25720,6 @@
 				D0C925B3194A024000E629CA /* fast_arrow_shadow@2x.png in Resources */,
 				D0E352601E5E4127007E6EB8 /* stp_card_amex_template@2x.png in Resources */,
 				D0E3526C1E5E4127007E6EB8 /* stp_card_cvc_amex@2x.png in Resources */,
-				D0C7B9CD1D9D868700EC75FA /* AppIntentVocabulary.plist in Resources */,
 				D0C925C5194A024000E629CA /* powerful_mask@2x.png in Resources */,
 				0912626E1FE02561008071A2 /* GroupChannel@3x.png in Resources */,
 				09B5B9A51E79A23100195236 /* CallSpeakerIcon@3x.png in Resources */,
@@ -25791,7 +25764,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "#/usr/bin/perl -pe 's/(BUILD_NUMBER = )(\\d+)/$1.($2+1)/eg' -i buildnumber.xcconfig\nsh ${PROJECT_DIR}/tools/bump_build_number.sh \"${PROJECT_DIR}/${INFOPLIST_FILE}\"\nsh ${PROJECT_DIR}/tools/sync_watch_version.sh \"${PROJECT_DIR}/${INFOPLIST_FILE}\" \"${PROJECT_DIR}/Watch/App/Info.plist\"\n";
+			shellScript = "#/usr/bin/perl -pe 's/(BUILD_NUMBER = )(\\d+)/$1.($2+1)/eg' -i buildnumber.xcconfig\nsh ${PROJECT_DIR}/tools/bump_build_number.sh \"${PROJECT_DIR}/${INFOPLIST_FILE}\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -26106,7 +26079,6 @@
 				D01160CF1F41F1320039383E /* TLSchemeParam.mm in Sources */,
 				D01160571F41F1310039383E /* TLRPCmessages_searchGifs.mm in Sources */,
 				D044CB6C192969850001C986 /* TGLocationThumbnailDataSource.m in Sources */,
-				68B63D3D1BB25B1F00205AC3 /* TGBridgeRemoteHandler.m in Sources */,
 				D011628D1F41F1350039383E /* TLInvokeWithLayer.mm in Sources */,
 				68D167CB1DB648BC00509032 /* TGCallReceptionView.m in Sources */,
 				D0F7B4DC1C2385FD008C5DB1 /* TGModernConversationMediaContextResultsAssociatedPanel.m in Sources */,
@@ -26482,7 +26454,6 @@
 				D01E9DCA15B8D7A700C624F2 /* TGTelegraphDialogListCompanion.mm in Sources */,
 				D00040A515BCD2EA00AF9EBF /* TGMessage+Telegraph.m in Sources */,
 				D01F94AF1E5E3DB4002627A1 /* STPAddress.m in Sources */,
-				68535EF11C4F8D82001821D9 /* TGWatchReplyCollectionItemView.m in Sources */,
 				68B63D351BB25B1F00205AC3 /* TGBridgeConversationHandler.m in Sources */,
 				09D8EECB1EABE0A600CC3AEB /* TGRoundMessageTimeView.m in Sources */,
 				090F3D66205C02940088A3FA /* TGPassportRequestController.m in Sources */,
@@ -27206,7 +27177,6 @@
 				D01162351F41F1350039383E /* TLGeoPoint.mm in Sources */,
 				D01161731F41F1330039383E /* NSArray_SchemeParam.mm in Sources */,
 				D01161A11F41F1330039383E /* TLauth_PasswordRecovery.mm in Sources */,
-				684853F01C1B580E00007D21 /* TGWatchController.m in Sources */,
 				D01161F11F41F1340039383E /* TLcontacts_Found.mm in Sources */,
 				D0630B711CC811AA00FC9AA4 /* TGInlineBotsSettingsCell.m in Sources */,
 				D02C2A5C1B97594900E30D1E /* TGVisibleMessageHole.m in Sources */,
@@ -28315,7 +28285,6 @@
 				D070087E1B343D5100AA43BF /* TGMusicPlayer.m in Sources */,
 				D01160EF1F41F1320039383E /* TLupdates_Difference.mm in Sources */,
 				93CF3B51181DCA88003D8DE1 /* TGModernTextView.m in Sources */,
-				68535EE31C4F8D72001821D9 /* TGWatchReplyCollectionItem.m in Sources */,
 				93064E13183552B10024C05A /* TGModernSendMessageActor.m in Sources */,
 				D0115F6D1F41F1300039383E /* TLRPCchannels_leaveChannel.mm in Sources */,
 				D00BF0511CF89A4500170DB1 /* TLDraftMessage$draftMessage.mm in Sources */,
@@ -29101,6 +29070,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D064421C1E4E2A3600394D5F /* AppStore.xcconfig */;
 			buildSettings = {
+				EXCLUDED_SOURCE_FILE_NAMES = "TGBridge*.m TGBridge*.mm TGWatch*.m";
 				AD_HOC_CODE_SIGNING_ALLOWED = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = armv7;
@@ -29743,6 +29713,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 93EFBF0E173DC6DA00F7B89E /* Config.xcconfig */;
 			buildSettings = {
+				EXCLUDED_SOURCE_FILE_NAMES = "TGBridge*.m TGBridge*.mm TGWatch*.m";
 				AD_HOC_CODE_SIGNING_ALLOWED = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = armv7;
@@ -30112,6 +30083,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D013CB03209C3DFC009A0B6F /* Fork.xcconfig */;
 			buildSettings = {
+				EXCLUDED_SOURCE_FILE_NAMES = "TGBridge*.m TGBridge*.mm TGWatch*.m";
 				AD_HOC_CODE_SIGNING_ALLOWED = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = armv7;
@@ -30506,6 +30478,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D013CB03209C3DFC009A0B6F /* Fork.xcconfig */;
 			buildSettings = {
+				EXCLUDED_SOURCE_FILE_NAMES = "TGBridge*.m TGBridge*.mm TGWatch*.m";
 				AD_HOC_CODE_SIGNING_ALLOWED = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = armv7;
@@ -30958,6 +30931,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = 93EFBF0E173DC6DA00F7B89E /* Config.xcconfig */;
 			buildSettings = {
+				EXCLUDED_SOURCE_FILE_NAMES = "TGBridge*.m TGBridge*.mm TGWatch*.m";
 				AD_HOC_CODE_SIGNING_ALLOWED = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = armv7;
@@ -31057,6 +31031,7 @@
 			isa = XCBuildConfiguration;
 			baseConfigurationReference = D064421C1E4E2A3600394D5F /* AppStore.xcconfig */;
 			buildSettings = {
+				EXCLUDED_SOURCE_FILE_NAMES = "TGBridge*.m TGBridge*.mm TGWatch*.m";
 				AD_HOC_CODE_SIGNING_ALLOWED = YES;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ARCHS = armv7;

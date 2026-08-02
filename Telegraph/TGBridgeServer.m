@@ -23,7 +23,6 @@
 #import "TGBridgeLocationHandler.h"
 #import "TGBridgeStickersHandler.h"
 #import "TGBridgePeerSettingsHandler.h"
-#import "TGBridgeRemoteHandler.h"
 #import "TGBridgeStateHandler.h"
 
 #import "TGBridgeChatMessageListSubscription.h"
@@ -171,7 +170,6 @@ static id TGSystemWCSessionDefaultSession(void)
      [TGBridgeLocationHandler class],
      [TGBridgeStickersHandler class],
      [TGBridgePeerSettingsHandler class],
-     [TGBridgeRemoteHandler class],
      [TGBridgeStateHandler class]
     ];
 }
@@ -912,23 +910,17 @@ static id TGSystemWCSessionDefaultSession(void)
 
 + (instancetype)instance
 {
-    static dispatch_once_t onceToken;
-    static TGBridgeServer *instance;
-    dispatch_once(&onceToken, ^
-    {
-        Class sessionClass = TGSystemWCSessionClass();
-        if (TGSystemWCSessionIsSupported(sessionClass))
-            instance = [[TGBridgeServer alloc] init];
-    });
-    return instance;
+    // The Apple Watch companion is not shipped by Twelvium.  Keep the bridge
+    // API as a harmless compatibility stub so old call sites do not allocate
+    // queues, handlers, services or a WCSession during iPhone startup.
+    return nil;
 }
 
 + (SSignal *)instanceSignal {
-    return [[[SSignal alloc] initWithGenerator:^id<SDisposable>(SSubscriber *subscriber) {
-        [subscriber putNext:[self instance]];
+    return [[SSignal alloc] initWithGenerator:^id<SDisposable>(SSubscriber *subscriber) {
         [subscriber putCompletion];
         return nil;
-    }] startOn:[TGBridgeServer queue]];
+    }];
 }
 
 + (bool)serverQueueIsCurrent {

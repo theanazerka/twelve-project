@@ -196,7 +196,7 @@
             if (message.messageLifetime > 0 && message.messageLifetime <= 60 && message.layer >= 17)
                 [previewUri appendString:@"&secret=1"];
             
-            [previewImageInfo addImageWithSize:renderSize url:previewUri];
+            [previewImageInfo addImageWithSize:thumbnailSize url:previewUri];
         }
         
         if (outImageInfo != NULL)

@@ -576,7 +576,7 @@
     
     [(UIView *)[_profileDataItem visibleAvatarView] setHidden:false];
     
-    TGImageProcessor filter = [TGRemoteImageView imageProcessorForName:@"circle:64x64"];
+    TGImageProcessor filter = [TGRemoteImageView imageProcessorForName:[TGPresentation classicIOS6Style] ? @"avatar64" : @"circle:64x64"];
     UIImage *avatarImage = filter(image);
     
     [_profileDataItem setUpdatingAvatar:avatarImage hasUpdatingAvatar:true];

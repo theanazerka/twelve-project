@@ -49,6 +49,20 @@ static UIImage *TGClassicIOS6AvatarPlaceholder(NSString *type, CGSize size)
     return image;
 }
 
+static UIImage *TwelviumSystemAvatarImage(NSString *resourceName, CGSize size)
+{
+    NSString *path = [[NSBundle mainBundle] pathForResource:resourceName ofType:@"png" inDirectory:@"ClassicIOS6"];
+    UIImage *source = path.length == 0 ? nil : [UIImage imageWithContentsOfFile:path];
+    if (source == nil)
+        return nil;
+
+    UIGraphicsBeginImageContextWithOptions(size, false, 0.0f);
+    [source drawInRect:CGRectMake(0.0f, 0.0f, size.width, size.height)];
+    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    return image;
+}
+
 @implementation TGPlaceholderImageDataSource
 
 + (void)load
@@ -160,6 +174,19 @@ static UIImage *TGClassicIOS6AvatarPlaceholder(NSString *type, CGSize size)
         return nil;
     
     NSString *type = args[@"type"];
+    if ([type isEqualToString:@"telegram-support"])
+    {
+        UIImage *image = TwelviumSystemAvatarImage(@"TwelviumTelegramSupportAvatar", size);
+        if (image != nil)
+        {
+            TG_SYNCHRONIZED_BEGIN(imageCache);
+            [TGPlaceholderImageDataSource imageCache][[self cacheKeyForArgs:args]] = image;
+            TG_SYNCHRONIZED_END(imageCache);
+            return [[TGDataResource alloc] initWithImage:image decoded:true];
+        }
+        return nil;
+    }
+
     UIImage *classicPlaceholder = TGClassicIOS6AvatarPlaceholder(type, size);
     if (classicPlaceholder != nil)
     {

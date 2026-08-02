@@ -64,6 +64,7 @@ typedef enum {
         _photoFileReferenceSmall = [coder decodeDataCorCKey:"frs"];
         _photoFileReferenceBig = [coder decodeDataCorCKey:"frb"];
         _emojiStatusDocumentId = [coder decodeInt64ForCKey:"esd"];
+        _isPremium = [coder decodeInt32ForCKey:"pr"] != 0;
     }
     return self;
 }
@@ -85,6 +86,7 @@ typedef enum {
     [coder encodeData:_photoFileReferenceSmall forCKey:"frs"];
     [coder encodeData:_photoFileReferenceBig forCKey:"frb"];
     [coder encodeInt64:_emojiStatusDocumentId forCKey:"esd"];
+    [coder encodeInt32:_isPremium ? 1 : 0 forCKey:"pr"];
 }
 
 - (id)copyWithZone:(NSZone *)__unused zone
@@ -108,6 +110,7 @@ typedef enum {
     user.presence = _presence;
     user.customProperties = _customProperties;
     user.emojiStatusDocumentId = _emojiStatusDocumentId;
+    user.isPremium = _isPremium;
     user.contactId = _contactId;
     user->_contactIdInitialized = _contactIdInitialized;
     user->_formattedPhoneInitialized = _formattedPhoneInitialized;
@@ -277,6 +280,8 @@ typedef enum {
         ((anotherUser.photoUrlSmall == nil && _photoUrlSmall == nil) || [anotherUser.photoUrlSmall isEqualToString:_photoUrlSmall]) &&
         ((anotherUser.photoUrlMedium == nil && _photoUrlMedium == nil) || [anotherUser.photoUrlMedium isEqualToString:_photoUrlMedium]) &&
         ((anotherUser.photoUrlBig == nil && _photoUrlBig == nil) || [anotherUser.photoUrlBig isEqualToString:_photoUrlBig]) && TGObjectCompare(anotherUser.photoFileReferenceSmall, _photoFileReferenceSmall) && TGObjectCompare(anotherUser.photoFileReferenceBig, _photoFileReferenceBig) && anotherUser.presence.online == _presence.online && anotherUser.presence.lastSeen == _presence.lastSeen && TGStringCompare(_userName, anotherUser.userName) && anotherUser.kind == _kind && anotherUser.botKind == _botKind &&
+        _isPremium == anotherUser.isPremium &&
+        _emojiStatusDocumentId == anotherUser.emojiStatusDocumentId &&
         TGStringCompare(_restrictionReason, anotherUser.restrictionReason))
     {
         return true;
@@ -337,6 +342,14 @@ typedef enum {
         difference |= TGUserFieldOther;
     
     if (anotherUser.flags != _flags) {
+        difference |= TGUserFieldOther;
+    }
+
+    if (anotherUser.isPremium != _isPremium) {
+        difference |= TGUserFieldOther;
+    }
+
+    if (anotherUser.emojiStatusDocumentId != _emojiStatusDocumentId) {
         difference |= TGUserFieldOther;
     }
     

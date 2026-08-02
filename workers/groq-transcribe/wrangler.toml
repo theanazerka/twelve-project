@@ -1,0 +1,7 @@
+name = "twelvium-groq-transcribe"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Deploy with: npx wrangler deploy
+# The worker deliberately does not store a Groq key. The iOS client sends
+# each user's key in X-Groq-Key and the worker forwards it over server-side TLS.

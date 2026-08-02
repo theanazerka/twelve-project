@@ -21,6 +21,7 @@
 @interface TGContactCell ()
 {
     CALayer *_separatorLayer;
+    UIImageView *_markedUserBadgeView;
 }
 
 @property (nonatomic, strong) TGLetteredAvatarView *avatarView;
@@ -82,6 +83,11 @@
         _contactContentsView.titleBoldFont = TGMediumSystemFontOfSize(17.0f);
         _contactContentsView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
         [self.contentView addSubview:_contactContentsView];
+
+        _markedUserBadgeView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"ZikfolvStatusBadge"]];
+        _markedUserBadgeView.contentMode = UIViewContentModeScaleAspectFit;
+        _markedUserBadgeView.hidden = true;
+        [self.contentView addSubview:_markedUserBadgeView];
         
         _boldMode = 2;
         
@@ -176,6 +182,8 @@
 
 - (void)resetView:(bool)animateState
 {
+    _markedUserBadgeView.hidden = _itemId != 314366525;
+
     NSString *displayFirstName = _titleTextFirst;
     NSString *displayLastName = _titleTextSecond;
     if (TGIsKorean())
@@ -223,10 +231,10 @@
             if (animateState)
             {
                 UIImage *currentImage = [_avatarView currentImage];
-                [_avatarView loadImage:_avatarUrl filter:TGIsPad() ? @"circle:45x45" : @"circle:40x40" placeholder:(currentImage != nil ? currentImage : placeholder) forceFade:true];
+                [_avatarView loadImage:_avatarUrl filter:[TGPresentation classicIOS6Style] ? (TGIsPad() ? @"avatar45" : @"avatar40") : (TGIsPad() ? @"circle:45x45" : @"circle:40x40") placeholder:(currentImage != nil ? currentImage : placeholder) forceFade:true];
             }
             else
-                [_avatarView loadImage:_avatarUrl filter:TGIsPad() ? @"circle:45x45" : @"circle:40x40" placeholder:placeholder];
+                [_avatarView loadImage:_avatarUrl filter:[TGPresentation classicIOS6Style] ? (TGIsPad() ? @"avatar45" : @"avatar40") : (TGIsPad() ? @"circle:45x45" : @"circle:40x40") placeholder:placeholder];
         }
     }
     else
@@ -387,6 +395,20 @@
     }
     
     _contactContentsView.titleOffset = CGPointMake(avatarWidth + 21 + leftPadding, titleLabelsY);
+
+    if (!_markedUserBadgeView.hidden)
+    {
+        UIFont *firstFont = (_contactContentsView.titleBoldMode & 1) ? _contactContentsView.titleBoldFont : _contactContentsView.titleFont;
+        UIFont *secondFont = (_contactContentsView.titleBoldMode & 2) ? _contactContentsView.titleBoldFont : _contactContentsView.titleFont;
+        CGFloat titleWidth = [_contactContentsView.titleFirst sizeWithFont:firstFont].width;
+        if (_contactContentsView.titleSecond.length != 0)
+            titleWidth += 4.0f + [_contactContentsView.titleSecond sizeWithFont:secondFont].width;
+
+        static const CGFloat badgeWidth = 38.0f;
+        static const CGFloat badgeHeight = 16.0f;
+        CGFloat badgeX = MIN(_contactContentsView.titleOffset.x + titleWidth + 5.0f, viewSize.width - badgeWidth - 8.0f);
+        _markedUserBadgeView.frame = CGRectMake(CGFloor(badgeX), CGFloor(titleLabelsY + 1.0f), badgeWidth, badgeHeight);
+    }
 }
 
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated

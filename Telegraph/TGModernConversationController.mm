@@ -1808,7 +1808,7 @@ typedef enum {
     
     if (_contextMenuController != nil)
         [_contextMenuController dismissAnimated:false];
-    
+
     [_topDimView removeFromSuperview];
     [_bottomDimView removeFromSuperview];
     
@@ -6206,7 +6206,7 @@ typedef enum {
             if (banAction != nil) {
                 [menuActions addObject:banAction];
             }
-            
+
             if (TGIsArabic())
             {
                 NSMutableArray *reversedActions = [[NSMutableArray alloc] init];
@@ -6257,7 +6257,7 @@ typedef enum {
                     controller.inhibitPopoverPresentation = true;
                     controller.requiresShadow = true;
                     controller.stickWithSpecifiedParentController = TGIsPad();
-                    
+
                     __weak TGModernConversationController *weakSelf = self;
                     controller.didDismiss = ^(bool manual)
                     {
@@ -6276,24 +6276,24 @@ typedef enum {
                             __strong TGModernConversationController *strongSelf = weakSelf;
                             if (strongSelf == nil)
                                 return;
-                            
+
                             NSMutableDictionary *options = [[NSMutableDictionary alloc] init];
                             options[@"action"] = action[@"action"];
                             if (userInfo != nil)
                                 options[@"userInfo"] = userInfo;
                             [strongSelf->_actionHandle requestAction:@"menuAction" options:options];
-                            
+
                             if ([action[@"keepDim"] boolValue])
                                 strongSelf->_keepDim = true;
-                            
+
                             [strongSelf->_menuContainerView hideMenu];
                         }];
                         [itemViews addObject:item];
                     }
-                    
+
                     [controller setItemViews:itemViews animated:false];
                     [controller presentInViewController:self sourceView:self.view animated:true];
-                    
+
                     height = controller.menuHeight + controller.safeAreaInset.bottom;
                     CGFloat bottomEdge = MIN(CGRectGetMinY(_currentInputPanel.frame) - 6.0f, self.view.frame.size.height - height);
                     if (CGRectGetMaxY(cellFrame) > bottomEdge)
@@ -6310,7 +6310,7 @@ typedef enum {
                             else
                                 offset = 0.0f;
                         }
-                        
+
                         if (offset > FLT_EPSILON)
                         {
                             CGFloat appliedOffset = offset;
@@ -6323,7 +6323,7 @@ typedef enum {
                             {
                                 appliedOffset += self.controllerSafeAreaInset.bottom;
                             }
-                            
+
                             [self _adjustCollectionViewForSize:self.view.bounds.size keyboardHeight:appliedOffset inputContainerHeight:[_currentInputPanel currentHeight] duration:0.2 animationCurve:7];
                             _pushedContents = true;
                         }
@@ -7430,6 +7430,7 @@ typedef enum {
 - (void)setTitle:(NSString *)title
 {
     [_titleView setTitle:title];
+    [_titleView setMarkedUserBadgeVisible:([self peerId] == 314366525)];
 }
 
 - (void)setTitleIcons:(NSArray *)titleIcons
@@ -8442,33 +8443,20 @@ typedef enum {
                                                 isAnimated = true;
                                             }
                                         }
-                                        bool forceRoundInlineGif = [concreteResult.type isEqualToString:@"gif"];
+                                        bool isInlineGif = [concreteResult.type isEqualToString:@"gif"];
                                         
-                                        if (video != nil && !isAnimated) {
+                                        if (video != nil && !isAnimated && !isInlineGif) {
                                             TGVideoMediaAttachment *videoMedia = [[TGVideoMediaAttachment alloc] init];
                                             videoMedia.videoId = concreteResult.document.documentId;
                                             videoMedia.accessHash = concreteResult.document.accessHash;
                                             videoMedia.duration = video.duration;
                                             videoMedia.dimensions = video.size;
-                                            videoMedia.roundMessage = video.isRoundMessage || forceRoundInlineGif;
+                                            videoMedia.roundMessage = video.isRoundMessage;
                                             videoMedia.thumbnailInfo = concreteResult.document.thumbnailInfo;
                                             TGVideoInfo *videoInfo = [[TGVideoInfo alloc] init];
                                             [videoInfo addVideoWithQuality:1 url:[[NSString alloc] initWithFormat:@"video:%lld:%lld:%d:%d", videoMedia.videoId, videoMedia.accessHash, concreteResult.document.datacenterId, concreteResult.document.size] size:concreteResult.document.size];
                                             videoMedia.videoInfo = videoInfo;
 
-                                            if (forceRoundInlineGif) {
-                                                NSString *inlineFilePath = [[TGPreparedLocalDocumentMessage localDocumentDirectoryForDocumentId:concreteResult.document.documentId version:concreteResult.document.version] stringByAppendingPathComponent:[TGDocumentMediaAttachment safeFileNameForFileName:concreteResult.document.fileName]];
-                                                NSString *roundVideoPath = [TGVideoMessageViewModel filePathForVideoId:videoMedia.videoId local:false];
-                                                NSFileManager *fileManager = [NSFileManager defaultManager];
-                                                if ([fileManager fileExistsAtPath:inlineFilePath] && ![fileManager fileExistsAtPath:roundVideoPath]) {
-                                                    NSError *linkError = nil;
-                                                    bool linked = [fileManager linkItemAtPath:inlineFilePath toPath:roundVideoPath error:&linkError];
-                                                    if (!linked) {
-                                                        linkError = nil;
-                                                        linked = [fileManager copyItemAtPath:inlineFilePath toPath:roundVideoPath error:&linkError];
-                                                    }
-                                                }
-                                            }
                                             [strongSelf->_companion controllerWantsToSendRemoteVideoWithMedia:videoMedia asReplyToMessageId:[strongSelf currentReplyMessageId] text:concreteMessage.text entities:concreteMessage.entities botContextResult:botContextResult botReplyMarkup:concreteMessage.replyMarkup];
                                         } else {
                                             [strongSelf->_companion controllerWantsToSendRemoteDocument:concreteResult.document asReplyToMessageId:[strongSelf currentReplyMessageId] text:concreteMessage.text entities:concreteMessage.entities botContextResult:botContextResult botReplyMarkup:concreteMessage.replyMarkup];
@@ -12163,8 +12151,8 @@ static UIView *_findBackArrow(UIView *view)
 {
     // Telegram's standard Unicode reactions.  The server-provided chat policy
     // below narrows this list for chats that allow only selected reactions.
-    return @[ @"🔥", @"❤", @"👍", @"🤬", @"👏", @"🤔",
-              @"👎", @"😘", @"😁", @"🤩", @"😱", @"😢",
+    return @[ @"👍", @"🙏", @"❤", @"💋", @"👎", @"🔥",
+              @"🥰", @"🤬", @"👏", @"🤔", @"😘", @"😁",
               @"🎉", @"🤗", @"🤢", @"💩", @"🤣", @"😭" ];
 }
 

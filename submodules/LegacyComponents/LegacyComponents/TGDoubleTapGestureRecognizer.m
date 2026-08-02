@@ -170,7 +170,7 @@
             [(id<TGDoubleTapGestureRecognizerDelegate>)self.delegate gestureRecognizer:self didBeginAtPoint:[[touches anyObject] locationInView:self.view]];
         }
         
-        _longPressTimer = [TGDoubleTapGestureRecognizerTimerTarget scheduledMainThreadTimerWithTarget:self action:@selector(longTapEvent) interval:0.4 repeat:false];
+        _longPressTimer = [TGDoubleTapGestureRecognizerTimerTarget scheduledMainThreadTimerWithTarget:self action:@selector(longTapEvent) interval:1.5 repeat:false];
     }
     else if (_currentTapCount >= 1)
     {

@@ -95,6 +95,7 @@ typedef enum {
 @property (nonatomic) int32_t flags;
 
 @property (nonatomic) bool isVerified;
+@property (nonatomic) bool isPremium;
 @property (nonatomic) bool hasExplicitContent;
 @property (nonatomic, strong) NSString *restrictionReason;
 @property (nonatomic, strong) NSString *contextBotPlaceholder;

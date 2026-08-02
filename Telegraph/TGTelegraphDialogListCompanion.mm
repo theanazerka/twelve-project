@@ -950,6 +950,7 @@ static NSComparisonResult TGIOS6DialogListPinnedDateFirstCompare(id<TGDialogList
             user = [[TGDatabase instance] loadUser:(int)userId];
         
         dict[@"isVerified"] = @(user.isVerified);
+        dict[@"isPremium"] = @(user.isPremium);
         
         NSString *title = nil;
         NSArray *titleLetters = nil;

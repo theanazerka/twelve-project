@@ -105,6 +105,11 @@
                     updatedUser.phoneNumber = originalUser.phoneNumber;
                     updatedUser.phonebookFirstName = originalUser.phonebookFirstName;
                     updatedUser.phonebookLastName = originalUser.phonebookLastName;
+                    // Minimal users do not carry the full premium emoji state.
+                    // Do not let a lightweight dialog/history update erase the
+                    // status that was fetched from the complete self user.
+                    updatedUser.isPremium = originalUser.isPremium;
+                    updatedUser.emojiStatusDocumentId = originalUser.emojiStatusDocumentId;
                 }
                 
                 [updateUsers addObject:updatedUser];

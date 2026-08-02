@@ -11,10 +11,6 @@
 #import "TLMetaClassStore.h"
 #import "../submodules/MtProtoKit/MTProtoKit/MTProtoKit.h"
 
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 100000
-#import <Intents/Intents.h>
-#endif
-
 #import "TGAppDelegate.h"
 
 #import "../submodules/LegacyComponents/LegacyComponents/UIDevice+PlatformInfo.h"
@@ -168,7 +164,6 @@
 #include <set>
 #include <map>
 
-#import "TGBridgeServer.h"
 
 #import "TGGlobalMessageSearchSignals.h"
 #import "TGChannelManagementSignals.h"
@@ -936,6 +931,16 @@ static int64_t TGIOS6ModernUserIdFromStoredUser(TGUser *user, int32_t uid)
         {
             return TGScaleAndRoundCorners(source, CGSizeMake(40, 40), CGSizeZero, 4, nil, false, nil);
         } withName:@"avatar40"];
+
+        [TGRemoteImageView registerImageProcessor:^UIImage *(UIImage *source)
+        {
+            return TGScaleAndRoundCorners(source, CGSizeMake(45, 45), CGSizeZero, 4, nil, false, nil);
+        } withName:@"avatar45"];
+
+        [TGRemoteImageView registerImageProcessor:^UIImage *(UIImage *source)
+        {
+            return TGScaleAndRoundCorners(source, CGSizeMake(64, 64), CGSizeZero, 6, nil, false, nil);
+        } withName:@"avatar64"];
         
         [TGRemoteImageView registerImageProcessor:^UIImage *(UIImage *source)
         {
@@ -975,7 +980,7 @@ static int64_t TGIOS6ModernUserIdFromStoredUser(TGUser *user, int32_t uid)
         
         [TGRemoteImageView registerImageProcessor:^UIImage *(UIImage *source)
         {
-            return TGScaleAndRoundCornersWithOffset(source, CGSizeMake(38, 38), CGPointMake(0.0f, 0.0f), CGSizeMake(38, 38), 19, nil, false, nil);
+            return TGScaleAndRoundCornersWithOffset(source, CGSizeMake(38, 38), CGPointMake(0.0f, 0.0f), CGSizeMake(38, 38), 4, nil, false, nil);
         } withName:@"conversationAvatar"];
         
         [TGRemoteImageView registerImageProcessor:^UIImage *(UIImage *source)
@@ -1315,10 +1320,6 @@ static int64_t TGIOS6ModernUserIdFromStoredUser(TGUser *user, int32_t uid)
         [TGRecentMaskStickersSignal clearRecentStickers];
         [TGFavoriteStickersSignal clearFavoriteStickers];
                 
-        [[[TGBridgeServer instanceSignal] onNext:^(TGBridgeServer *server) {
-            [server setAuthorized:false userId:0];
-        }] startWithNext:nil];
-        
         [_musicPlayer setPlaylist:nil initialItemKey:nil metadata:nil];
         
         [ActionStageInstance() dispatchResource:@"/tg/loggedOut" resource:nil];
@@ -1951,15 +1952,6 @@ static int64_t TGIOS6ModernUserIdFromStoredUser(TGUser *user, int32_t uid)
 
 - (void)processAuthorizedWithUserId:(int)uid clientIsActivated:(bool)clientIsActivated
 {
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 100000
-    if (iosMajorVersion() >= 10) {
-        TGDispatchOnMainThread(^{
-            [INPreferences requestSiriAuthorization:^(__unused INSiriAuthorizationStatus status) {
-            }];
-        });
-    }
-#endif
-    
     [ActionStageInstance() dispatchOnStageQueue:^
     {
 #if TGUseModernNetworking
@@ -2025,10 +2017,6 @@ static int64_t TGIOS6ModernUserIdFromStoredUser(TGUser *user, int32_t uid)
                 });
             }
             
-            [[[TGBridgeServer instanceSignal] onNext:^(TGBridgeServer *server) {
-                [server setAuthorized:true userId:uid];
-            }] startWithNext:nil];
-            
             [[SQueue wrapConcurrentNativeQueue:[ActionStageInstance() globalStageDispatchQueue]] dispatch:^{
                 [_channelTasksDisposable add:[[TGChannelManagementSignals deleteChannelMessages] startWithNext:nil]];
                 [_channelTasksDisposable add:[[TGChannelManagementSignals readChannelMessages] startWithNext:nil]];
@@ -2061,9 +2049,6 @@ static int64_t TGIOS6ModernUserIdFromStoredUser(TGUser *user, int32_t uid)
         [TGAppDelegateInstance setupShortcutItems];
     });
     
-    [[[TGBridgeServer instanceSignal] onNext:^(TGBridgeServer *server) {
-        [server setAuthorized:false userId:0];
-    }] startWithNext:nil];
 }
 
 #pragma mark - Protocol

@@ -2226,14 +2226,33 @@ static UIImage *TGChatsLockBitmapImage(CGSize size, UIColor *color, bool top, bo
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(size, size), false, 0.0f);
     CGContextRef context = UIGraphicsGetCurrentContext();
 
+    CGRect rect = CGRectMake(0.0f, 0.0f, diameter, diameter);
+    bool classicIOS6Style = [[NSUserDefaults standardUserDefaults] boolForKey:@"TGClassicIOS6Style"];
     CGContextSetFillColorWithColor(context, color.CGColor);
-    CGContextFillEllipseInRect(context, CGRectMake(0.0f, 0.0f, diameter, diameter));
+    if (classicIOS6Style)
+    {
+        UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:rect cornerRadius:MIN(6.0f, diameter / 6.0f)];
+        [path fill];
+    }
+    else
+    {
+        CGContextFillEllipseInRect(context, rect);
+    }
     
     if (border > FLT_EPSILON)
     {
         CGContextSetStrokeColorWithColor(context, borderColor.CGColor);
         CGContextSetLineWidth(context, border);
-        CGContextStrokeEllipseInRect(context, CGRectMake(border / 2.0f, border / 2.0f, diameter - border, diameter - border));
+        CGRect borderRect = CGRectMake(border / 2.0f, border / 2.0f, diameter - border, diameter - border);
+        if (classicIOS6Style)
+        {
+            UIBezierPath *path = [UIBezierPath bezierPathWithRoundedRect:borderRect cornerRadius:MIN(6.0f, diameter / 6.0f)];
+            [path stroke];
+        }
+        else
+        {
+            CGContextStrokeEllipseInRect(context, borderRect);
+        }
     }
 
     UIImage *image = [UIGraphicsGetImageFromCurrentImageContext() stretchableImageWithLeftCapWidth:10.0f topCapHeight:0.0f];

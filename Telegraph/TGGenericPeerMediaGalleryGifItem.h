@@ -10,6 +10,7 @@
 @property (nonatomic, strong, readonly) NSString *previewUri;
 
 @property (nonatomic, strong) id authorPeer;
+@property (nonatomic, strong, readonly) NSString *author;
 @property (nonatomic) NSTimeInterval date;
 @property (nonatomic) int32_t messageId;
 @property (nonatomic) int64_t peerId;

@@ -4,24 +4,6 @@
 
 #import "LegacyComponentsInternal.h"
 
-#import <float.h>
-
-static bool TGIOS6ShouldRepairRoundVideoMessage(int32_t duration, CGSize dimensions, NSString *caption, bool hasStickers)
-{
-    if (hasStickers || caption.length != 0)
-        return false;
-    
-    if (duration < 0 || duration > 60)
-        return false;
-    
-    if (dimensions.width < 120.0f || dimensions.height < 120.0f)
-        return false;
-    
-    CGFloat diff = dimensions.width > dimensions.height ? dimensions.width - dimensions.height : dimensions.height - dimensions.width;
-    CGFloat maxSide = MAX(dimensions.width, dimensions.height);
-    return maxSide > FLT_EPSILON && diff / maxSide < 0.08f;
-}
-
 @interface TGVideoMediaAttachment ()
 {
     NSArray *_textCheckingResults;
@@ -88,13 +70,10 @@ static bool TGIOS6ShouldRepairRoundVideoMessage(int32_t duration, CGSize dimensi
         _hasStickers = [aDecoder decodeBoolForKey:@"hasStickers"];
         _embeddedStickerDocuments = [aDecoder decodeObjectForKey:@"embeddedStickerDocuments"];
         _roundMessage = [aDecoder decodeBoolForKey:@"roundMessage"];
+        if (_roundMessage && _duration <= 0)
+            _roundMessage = false;
         _originInfo = [aDecoder decodeObjectForKey:@"origin"];
         
-        if (!_roundMessage && TGIOS6ShouldRepairRoundVideoMessage(_duration, _dimensions, _caption, _hasStickers))
-        {
-            _roundMessage = true;
-            while (false) TGLog(@"IOS6MEDIA roundRepair coder videoId=%lld duration=%d dims=%.0fx%.0f", _videoId, _duration, _dimensions.width, _dimensions.height);
-        }
     }
     return self;
 }
@@ -302,6 +281,8 @@ static bool TGIOS6ShouldRepairRoundVideoMessage(int32_t duration, CGSize dimensi
         int8_t roundMessage = 0;
         [is read:(uint8_t *)&roundMessage maxLength:1];
         videoAttachment.roundMessage = roundMessage != 0;
+        if (videoAttachment.roundMessage && videoAttachment.duration <= 0)
+            videoAttachment.roundMessage = false;
     }
     
     if (version >= 5)
@@ -321,12 +302,6 @@ static bool TGIOS6ShouldRepairRoundVideoMessage(int32_t duration, CGSize dimensi
             }
             videoAttachment.originInfo = origin;
         }
-    }
-    
-    if (!videoAttachment.roundMessage && TGIOS6ShouldRepairRoundVideoMessage(videoAttachment.duration, videoAttachment.dimensions, videoAttachment.caption, videoAttachment.hasStickers))
-    {
-        videoAttachment.roundMessage = true;
-        while (false) TGLog(@"IOS6MEDIA roundRepair serialized videoId=%lld duration=%d dims=%.0fx%.0f", videoAttachment.videoId, videoAttachment.duration, videoAttachment.dimensions.width, videoAttachment.dimensions.height);
     }
     
     return videoAttachment;

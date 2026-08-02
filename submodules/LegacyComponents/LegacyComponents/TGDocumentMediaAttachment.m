@@ -343,6 +343,12 @@
 }
 
 - (bool)isAnimated {
+    // Round video messages can carry a legacy animated attribute. They must
+    // still be handled by the round-video player, never by the GIF pipeline.
+    if ([self isRoundVideo]) {
+        return false;
+    }
+
     for (id attribute in _attributes) {
         if ([attribute isKindOfClass:[TGDocumentAttributeAnimated class]]) {
             return true;
@@ -396,15 +402,37 @@
 }
 
 - (bool)isRoundVideo {
+    TGDocumentAttributeVideo *videoAttribute = nil;
+    bool hasAnimatedAttribute = false;
+    bool hasStickerAttribute = false;
     for (id attribute in _attributes) {
         if ([attribute isKindOfClass:[TGDocumentAttributeVideo class]]) {
             TGDocumentAttributeVideo *video = attribute;
             if (video.isRoundMessage) {
                 return true;
             }
+            videoAttribute = video;
+        } else if ([attribute isKindOfClass:[TGDocumentAttributeAnimated class]]) {
+            hasAnimatedAttribute = true;
+        } else if ([attribute isKindOfClass:[TGDocumentAttributeSticker class]]) {
+            hasStickerAttribute = true;
         }
     }
-    
+
+    // Builds made before the round-message flag was understood have already
+    // persisted such videos as ordinary documents. Recover the only safe
+    // legacy shape here so those cached messages do not fall through to the
+    // generic "open file" action.
+    if (videoAttribute != nil && !hasAnimatedAttribute && !hasStickerAttribute &&
+        [_mimeType hasPrefix:@"video/"] && _caption.length == 0 &&
+        videoAttribute.duration >= 0 && videoAttribute.duration <= 60 &&
+        videoAttribute.size.width >= 120.0f && videoAttribute.size.height >= 120.0f)
+    {
+        CGFloat maxSide = MAX(videoAttribute.size.width, videoAttribute.size.height);
+        CGFloat difference = ABS(videoAttribute.size.width - videoAttribute.size.height);
+        return maxSide > FLT_EPSILON && difference / maxSide < 0.08f;
+    }
+
     return false;
 }
 

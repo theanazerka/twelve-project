@@ -360,8 +360,6 @@ static UIImage *TGClassicIOS6OriginalImageNamed(NSString *name)
 
 #import "TGBotSignals.h"
 
-#import "TGBridgeServer.h"
-#import "TGBridgeRemoteHandler.h"
 
 #import "TGAccountSignals.h"
 #import "TGServiceSignals.h"
@@ -411,9 +409,6 @@ static UIImage *TGClassicIOS6OriginalImageNamed(NSString *name)
 #import "TGWebAppController.h"
 #import "TGPassportRequestController.h"
 
-#if __IPHONE_OS_VERSION_MAX_ALLOWED >= 100000
-#import <Intents/Intents.h>
-#endif
 #import "../submodules/LegacyComponents/Pushkit/Pushkit.h"
 
 #import "TGWebpageSignals.h"
@@ -762,7 +757,6 @@ static NSUserDefaults *TGAppDelegateUserDefaultsCompat()
     self = [super init];
     if (self != nil)
     {
-        [[TGBridgeServer instanceSignal] startWithNext:nil];
         _localizationUpdatedPipe = [[SPipe alloc] init];
         _localizationUpdated = _localizationUpdatedPipe.signalProducer();
         _statusBarPressedPipe = [[SPipe alloc] init];
@@ -1066,9 +1060,6 @@ static unsigned int overrideIndexAbove(__unused id self, __unused SEL _cmd)
             
             [TGEmbedPIPController hide];
             
-            [[[TGBridgeServer instanceSignal] onNext:^(TGBridgeServer *server) {
-                [server startRunning];
-            }] startWithNext:nil];
         });
         
         return ^(bool match)
@@ -1259,10 +1250,6 @@ static unsigned int overrideIndexAbove(__unused id self, __unused SEL _cmd)
             [controller refreshTouchId];
         });
     }
-    
-    [[[TGBridgeServer instanceSignal] onNext:^(TGBridgeServer *server) {
-        [server setPasscodeEnabled:[TGDatabaseInstance() isPasswordSet:NULL] passcodeEncrypted:[TGDatabaseInstance() isEncryptionEnabled]];
-    }] startWithNext:nil];
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^
     {
@@ -1523,9 +1510,6 @@ static unsigned int overrideIndexAbove(__unused id self, __unused SEL _cmd)
                  if (launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey] != nil)
                      [self processPossibleConfigUpdateNotification:launchOptions[UIApplicationLaunchOptionsRemoteNotificationKey]];
                  
-                 [[[TGBridgeServer instanceSignal] onNext:^(TGBridgeServer *server) {
-                     [server startRunning];
-                 }] startWithNext:nil];
              }];
           }];
     });
@@ -1544,10 +1528,6 @@ static unsigned int overrideIndexAbove(__unused id self, __unused SEL _cmd)
         }
     });
     
-    [[[TGBridgeServer instanceSignal] onNext:^(TGBridgeServer *server) {
-        [server startServices];
-    }] startWithNext:nil];
-
     if ([[UIDevice currentDevice].systemVersion intValue] <= 6)
     {
         [application beginReceivingRemoteControlEvents];
@@ -3712,12 +3692,6 @@ static unsigned int overrideIndexAbove(__unused id self, __unused SEL _cmd)
 
 - (void)application:(UIApplication *)__unused application didReceiveLocalNotification:(UILocalNotification *)notification
 {
-    if (iosMajorVersion() >= 8 && [notification.category isEqualToString:@"wr"])
-    {
-        [TGBridgeRemoteHandler handleLocalNotification:notification.userInfo];
-        return;
-    }
-    
     if (!_inBackground || [[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad)
         return;
     
@@ -4944,43 +4918,6 @@ static unsigned int overrideIndexAbove(__unused id self, __unused SEL _cmd)
                     [[TGInterfaceManager instance] navigateToConversationWithId:peerId conversation:nil performActions:nil animated:false];
                 }
             }
-        }
-    } else if ([userActivity.activityType isEqualToString:INStartAudioCallIntentIdentifier]) {
-        INInteraction *interaction = [userActivity interaction];
-        if ([interaction.intent isKindOfClass:[INStartAudioCallIntent class]])
-        {
-            NSString *handle = userActivity.userInfo[@"handle"];
-            if (handle == nil)
-            {
-                INPerson *person = [[(INStartAudioCallIntent *)(interaction.intent) contacts] firstObject];
-                handle = person.personHandle.value;
-            }
-            
-            int32_t peerId = 0;
-            if ([handle hasPrefix:@"TGCA"])
-            {
-                peerId = [[handle substringFromIndex:@"TGCA".length] intValue];
-            }
-            else
-            {
-                NSArray *users = [TGDatabaseInstance() contactUsersMatchingPhone:handle];
-                peerId = ((TGUser *)users.firstObject).uid;
-            }
-            
-            [[_finishedLaunching.signal deliverOn:[SQueue mainQueue]] startWithNext:^(__unused id next)
-            {
-                if ([self isOrWillBeLocked])
-                {
-                    self.onSuccessfulAuthorization = ^
-                    {
-                        [[TGInterfaceManager instance] callPeerWithId:peerId];
-                    };
-                }
-                else
-                {
-                    [[TGInterfaceManager instance] callPeerWithId:peerId];
-                }
-            }];
         }
     }
     

@@ -318,11 +318,25 @@ static dispatch_block_t recursiveBlock(void (^block)(dispatch_block_t recurse))
 
 + (SSignal *)updatedOriginInfo:(TGMediaOriginInfo *)origin identifier:(int64_t)identifier
 {
-    return [[[self fileReferenceManager] updatedOriginInfo:origin] map:^id(NSDictionary *dictionary) {
-        if (identifier == 0)
-            return dictionary.allValues.firstObject;
-        
-        return dictionary[@(identifier)];
+    return [[[self fileReferenceManager] updatedOriginInfo:origin] mapToSignal:^SSignal *(NSDictionary *dictionary) {
+        TGMediaOriginInfo *updatedInfo = nil;
+        if ([dictionary isKindOfClass:[NSDictionary class]])
+        {
+            if (identifier != 0)
+                updatedInfo = dictionary[@(identifier)];
+
+            // Some old cached attachments were converted from a document to a
+            // video attachment and lost the exact dictionary key. A message
+            // still contains a single primary downloadable media object, so
+            // using the sole refreshed origin is safe in this case.
+            if (updatedInfo == nil && dictionary.count == 1)
+                updatedInfo = dictionary.allValues.firstObject;
+        }
+
+        if (updatedInfo == nil || updatedInfo.fileReference.length == 0)
+            return [SSignal fail:nil];
+
+        return [SSignal single:updatedInfo];
     }];
 }
 
@@ -341,11 +355,12 @@ static dispatch_block_t recursiveBlock(void (^block)(dispatch_block_t recurse))
             return [[accessHashSignal mapToSignal:^SSignal *(NSNumber *accessHash) {
                 TGDownloadMessage *downloadMessage = [[TGDownloadMessage alloc] initWithPeerId:origin.cid.longLongValue accessHash:accessHash.longLongValue messageId:origin.mid.intValue];
                 return [[self downloadMessages:@[downloadMessage]] take:1];
-            }] map:^id(NSArray *messages)
+            }] mapToSignal:^SSignal *(NSArray *messages)
             {
                 TGMessage *message = messages.firstObject;
                 if (message == nil) {
                     while (false) TGLog(@"IOS6MEDIA origin refresh empty peer=%lld mid=%d", origin.cid.longLongValue, origin.mid.intValue);
+                    return [SSignal fail:nil];
                 }
                 
                 TGMediaOriginInfo *originInfo = nil;
@@ -391,10 +406,10 @@ static dispatch_block_t recursiveBlock(void (^block)(dispatch_block_t recurse))
                     }
                 }
                 
-                if (originInfo != nil)
-                    return @{ @(identifier): originInfo };
-                
-                return nil;
+                if (originInfo != nil && originInfo.fileReference.length != 0)
+                    return [SSignal single:@{ @(identifier): originInfo }];
+
+                return [SSignal fail:nil];
             }];
         }
             break;

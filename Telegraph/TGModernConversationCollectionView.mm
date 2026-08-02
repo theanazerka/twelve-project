@@ -36,7 +36,7 @@
     __weak id<TGModernConversationCollectionTouchBehaviour> _currentInstantPreviewTarget;
     
     NSTimeInterval _ignoreBackgroundTouchBeforeDate;
-    UIView *_dimView;
+    UIToolbar *_dimView;
 }
 
 @property (nonatomic, copy) void (^touchCompletion)();
@@ -681,9 +681,11 @@
     
     if (_dimView == nil)
     {
-        _dimView = [[UIView alloc] init];
+        _dimView = [[UIToolbar alloc] init];
         _dimView.alpha = 0.0f;
-        _dimView.backgroundColor = [UIColor colorWithWhite:0.0f alpha:0.4f];
+        _dimView.barStyle = UIBarStyleBlack;
+        _dimView.translucent = true;
+        _dimView.userInteractionEnabled = false;
         [self addSubview:_dimView];
     }
     else

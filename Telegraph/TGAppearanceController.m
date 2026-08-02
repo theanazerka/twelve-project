@@ -1,5 +1,7 @@
 #import "TGAppearanceController.h"
 
+#import <stdlib.h>
+
 #import "TGLegacyComponentsContext.h"
 
 #import "TGHeaderCollectionItem.h"
@@ -11,6 +13,7 @@
 #import "TGAppearanceColorCollectionItem.h"
 
 #import "TGAppearanceColorPickerItemView.h"
+#import "TGCustomAlertView.h"
 
 #import "TGPresentation.h"
 #import "TGDefaultPresentationPallete.h"
@@ -351,13 +354,13 @@
         [TGPresentation setClassicIOS6Style:_classicIOS6StyleItem.isOn];
         if (_classicIOS6StyleItem.isOn)
             [TGPresentation switchToPallete:[TGDefaultPresentationPallete new]];
-        if (_classicIOS6StyleItem.isOn)
-            [self.menuSections deleteSectionByReference:_themeSection];
-        else if ([self.menuSections.sections indexOfObject:_themeSection] == NSNotFound)
-            [self.menuSections addSection:_themeSection];
-        [_previewItem refreshMetrics];
-        [self.collectionView reloadData];
-        [self setNeedsStatusBarAppearanceUpdate];
+
+        [TGCustomAlertView presentAlertWithTitle:@"Restart Required" message:@"Restart Telegram to apply the interface style." cancelButtonTitle:TGLocalized(@"Common.OK") okButtonTitle:nil completionBlock:^(__unused bool okButtonPressed)
+        {
+            // This setting changes global image processors and view geometry;
+            // recreating the process avoids keeping mixed old/new style views.
+            exit(0);
+        }];
     }
 }
 

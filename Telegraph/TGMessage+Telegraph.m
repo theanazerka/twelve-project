@@ -298,12 +298,6 @@ static bool TGIOS6ShouldTreatSmallMp4DocumentAsGifLike(TGDocumentMediaAttachment
                         break;
                     }
                 }
-                if (!videoMedia.roundMessage && TGIOS6ShouldRepairRoundVideoDocument(videoMedia.duration, videoMedia.dimensions, videoMedia.caption, videoMedia.hasStickers, documentAttachment.mimeType))
-                {
-                    videoMedia.roundMessage = true;
-                    IOS6_NOOP_LOG(@"IOS6MEDIA roundRepair document cid=%lld mid=%d id=%lld duration=%d dims=%.0fx%.0f mime=%@", cid, mid, videoMedia.videoId, videoMedia.duration, videoMedia.dimensions.width, videoMedia.dimensions.height, documentAttachment.mimeType);
-                }
-                
                 TGVideoInfo *videoInfo = [[TGVideoInfo alloc] init];
                 [videoInfo addVideoWithQuality:1 url:[[NSString alloc] initWithFormat:@"video:%lld:%lld:%d:%d", videoMedia.videoId, videoMedia.accessHash, documentAttachment.datacenterId, documentAttachment.size] size:documentAttachment.size];
                 videoMedia.videoInfo = videoInfo;
@@ -338,7 +332,21 @@ static bool TGIOS6ShouldTreatSmallMp4DocumentAsGifLike(TGDocumentMediaAttachment
             return mediaAttachments;
         }
         
-        if (videoMedia == nil && TGIOS6ShouldTreatSmallMp4DocumentAsGifLike(documentAttachment, audioMedia, isSticker)) {
+        // Video notes may be short, square and small, which also matches the
+        // fallback heuristic for old animated MP4s. Preserve the protocol's
+        // round-message bit before applying any GIF compatibility heuristics.
+        bool isRoundVideo = videoMedia != nil && videoMedia.roundMessage;
+        if (!isRoundVideo && videoMedia != nil && TGIOS6ShouldRepairRoundVideoDocument(videoMedia.duration, videoMedia.dimensions, videoMedia.caption, videoMedia.hasStickers, documentAttachment.mimeType))
+        {
+            videoMedia.roundMessage = true;
+            isRoundVideo = true;
+            IOS6_NOOP_LOG(@"IOS6MEDIA roundRepair document cid=%lld mid=%d id=%lld duration=%d dims=%.0fx%.0f mime=%@", cid, mid, videoMedia.videoId, videoMedia.duration, videoMedia.dimensions.width, videoMedia.dimensions.height, documentAttachment.mimeType);
+        }
+        if (isRoundVideo)
+            isAnimated = false;
+
+        bool isSmallGifLikeMp4 = !isRoundVideo && TGIOS6ShouldTreatSmallMp4DocumentAsGifLike(documentAttachment, audioMedia, isSticker);
+        if (videoMedia == nil && isSmallGifLikeMp4) {
             CGSize fallbackDimensions = CGSizeZero;
             if (documentAttachment.thumbnailInfo != nil)
                 [documentAttachment.thumbnailInfo closestImageUrlWithSize:CGSizeZero resultingSize:&fallbackDimensions];
@@ -363,22 +371,27 @@ static bool TGIOS6ShouldTreatSmallMp4DocumentAsGifLike(TGDocumentMediaAttachment
         NSString *safeFileName = [documentAttachment safeFileName];
         NSString *lowerSafeFileName = [safeFileName lowercaseString];
         bool isGifFile = [documentAttachment.mimeType isEqualToString:@"image/gif"] || [lowerSafeFileName.pathExtension isEqualToString:@"gif"];
-        bool isSmallGifLikeMp4 = TGIOS6ShouldTreatSmallMp4DocumentAsGifLike(documentAttachment, audioMedia, isSticker);
-        bool isGifLikeMp4 = [documentAttachment.mimeType isEqualToString:@"video/mp4"] && (isSmallGifLikeMp4 || isAnimated || [lowerSafeFileName isEqualToString:@"animation.mp4"] || (videoMedia != nil && TGIOS6ShouldTreatVideoDocumentAsGifLike(videoMedia.duration, videoMedia.dimensions, nil, videoMedia.hasStickers, documentAttachment.mimeType, safeFileName)));
-        if (isGifFile)
+        bool isGifLikeMp4 = !isRoundVideo && [documentAttachment.mimeType isEqualToString:@"video/mp4"] && (isSmallGifLikeMp4 || isAnimated || [lowerSafeFileName isEqualToString:@"animation.mp4"] || (videoMedia != nil && TGIOS6ShouldTreatVideoDocumentAsGifLike(videoMedia.duration, videoMedia.dimensions, nil, videoMedia.hasStickers, documentAttachment.mimeType, safeFileName)));
+        if (isGifFile || isGifLikeMp4)
         {
             isAnimated = true;
-        }
-        else if (videoMedia != nil && isGifLikeMp4)
-        {
-            if (!videoMedia.roundMessage)
+            if (videoMedia != nil)
+                videoMedia.roundMessage = false;
+
+            bool hasAnimatedAttribute = false;
+            for (id attribute in documentAttachment.attributes)
             {
-                videoMedia.roundMessage = true;
-                IOS6_NOOP_LOG(@"IOS6MEDIA gifLikeRound document cid=%lld mid=%d id=%lld duration=%d dims=%.0fx%.0f mime=%@ file=%@", cid, mid, videoMedia.videoId, videoMedia.duration, videoMedia.dimensions.width, videoMedia.dimensions.height, documentAttachment.mimeType, safeFileName);
+                if ([attribute isKindOfClass:[TGDocumentAttributeAnimated class]])
+                {
+                    hasAnimatedAttribute = true;
+                    break;
+                }
             }
-            isAnimated = false;
+            if (!hasAnimatedAttribute)
+                documentAttachment.attributes = [documentAttachment.attributes arrayByAddingObject:[[TGDocumentAttributeAnimated alloc] init]];
+
+            IOS6_NOOP_LOG(@"IOS6MEDIA gifLikeDocument cid=%lld mid=%d id=%lld mime=%@ file=%@", cid, mid, documentAttachment.documentId, documentAttachment.mimeType, safeFileName);
         }
-        
         if (videoTTLSeconds > 0 && videoTTLSeconds <= 60) {
             isAnimated = false;
         }

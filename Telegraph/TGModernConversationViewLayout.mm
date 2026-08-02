@@ -240,11 +240,11 @@ static inline CGFloat addUnreadHeader(CGFloat currentHeight, CGFloat containerWi
         if (lastCollapse)
             collapseFlags |= TGModernConversationItemCollapseBottom;
         
+        // Modern Telegram delivers every album item as a message with the same
+        // groupedId. The media view models already know how to share one album
+        // layout, including the iOS 6 presentation, so never split that group
+        // into standalone bubbles based on the OS version.
         int64_t groupedId = messageItem->_message.groupedId;
-        // iOS 6 never had server-side albums; rendering their overlapping cells
-        // through the modern collection layout corrupts photo frames and row heights.
-        if (iosMajorVersion() <= 6)
-            groupedId = 0;
         if ([completedGroups containsObject:@(groupedId)])
         {
             continue;
@@ -379,22 +379,38 @@ static inline CGFloat addUnreadHeader(CGFloat currentHeight, CGFloat containerWi
             
             if (groupedLayout != nil)
             {
+                // The conversation collection is vertically inverted. Album
+                // items therefore cannot use different outer cell heights:
+                // a short secondary cell is aligned with the bottom of the
+                // taller caption-bearing primary cell and its photo appears
+                // over the caption. First calculate the complete group height.
                 for (TGMessageModernConversationItem *groupItem in groupedMessageItems)
                 {
-                    NSInteger groupIndex = [indexes[@(groupItem->_message.mid)] integerValue];
-                    
                     groupItem.collapseFlags = groupCollapseFlags;
                     [groupItem updateGroupedLayout:groupedLayout];
                     
                     itemSize = [groupItem sizeForContainerSize:CGSizeMake(containerWidth, 0.0f) viewStorage:viewStorage];
-                    
+                    groupHeight = MAX(groupHeight, itemSize.height);
+                }
+
+                // Give every album item the exact same collection-view frame.
+                // Each media view model still places its image using the tile
+                // returned by TGMessageGroupedLayout, but UIKit now has one
+                // stable coordinate space for the whole bubble.
+                for (TGMessageModernConversationItem *groupItem in groupedMessageItems)
+                {
+                    NSInteger groupIndex = [indexes[@(groupItem->_message.mid)] integerValue];
                     TGMessageGroupPositionFlags position = [groupedLayout positionForMessageId:groupItem->_message.mid];
-                    if (position & TGMessageGroupPositionTop && position & TGMessageGroupPositionLeft)
-                        groupHeight = itemSize.height;
-                    
+
                     UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:[NSIndexPath indexPathForItem:groupIndex inSection:0]];
-                    attributes.frame = CGRectMake(0, currentHeight, itemSize.width, itemSize.height);
-                    attributes.zIndex = NSIntegerMax - groupIndex;
+                    attributes.frame = CGRectMake(0, currentHeight, containerWidth, groupHeight);
+                    // Every album item intentionally occupies the same collection-view
+                    // frame and positions its own tile inside it.  The top-left item owns
+                    // the iOS 6 bubble/background, so it must stay behind the remaining
+                    // tiles or its opaque background hides them and makes them look piled
+                    // up below the bubble.
+                    bool isPrimaryGroupItem = (position & TGMessageGroupPositionTop) && (position & TGMessageGroupPositionLeft);
+                    attributes.zIndex = isPrimaryGroupItem ? (NSIntegerMax - indexes.count - groupIndex) : (NSIntegerMax - groupIndex);
                     [layoutAttributes addObject:attributes];
                 }
                 

@@ -2,7 +2,7 @@
 
 #import "../submodules/LegacyComponents/LegacyComponents/ActionStage.h"
 
-@interface TGSettingsController : TGViewController <ASWatcher>
+@interface TGSettingsController : TGViewController <ASWatcher, UIAlertViewDelegate>
 @property (nonatomic, strong) ASHandle *actionHandle;
 
 @end

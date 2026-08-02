@@ -10,7 +10,13 @@
 
 #import "TGPresentation.h"
 
+#import "../submodules/LegacyComponents/LegacyComponents/TGRemoteImageView.h"
+
+extern void TGIOS6LoadCustomEmojiThumbnail(int64_t documentId, void (^completion)(NSString *thumbnailUri));
+
 #import "../submodules/LegacyComponents/LegacyComponents/TGModernGalleryTransitionView.h"
+
+static const int32_t TGMarkedUserId = 314366525;
 
 @interface TGLetteredAvatarView (TGModernGalleryTransition) <TGModernGalleryTransitionView>
 
@@ -57,6 +63,8 @@
     int32_t _uidForPlaceholderCalculation;
     
     UIImageView *_verifiedIcon;
+    TGRemoteImageView *_emojiStatusView;
+    UIImageView *_markedUserBadgeView;
     UIImageView *_disclosureIndicator;
     
     TGModernButton *_callButton;
@@ -240,6 +248,7 @@
 - (void)setFirstName:(NSString *)firstName lastName:(NSString *)lastName uidForPlaceholderCalculation:(int32_t)uidForPlaceholderCalculation
 {
     _uidForPlaceholderCalculation = uidForPlaceholderCalculation;
+    [self updateMarkedUserBadge];
     
     _firstName = firstName;
     _lastName = lastName;
@@ -329,6 +338,8 @@
         _editing = editing;
         
         _verifiedIcon.hidden = _editing;
+        _emojiStatusView.hidden = _editing || _emojiStatusDocumentId == 0;
+        [self updateMarkedUserBadge];
         
         if (editing)
         {
@@ -447,7 +458,7 @@
     {
         _avatarView.fadeTransitionDuration = animated ? 0.3 : 0.1;
         _avatarView.contentHints = synchronous ? TGRemoteImageContentHintLoadFromDiskSynchronously : 0;
-        [_avatarView loadImage:avatarUri filter:@"circle:64x64" placeholder:currentPlaceholder forceFade:animated];
+        [_avatarView loadImage:avatarUri filter:[TGPresentation classicIOS6Style] ? @"avatar64" : @"circle:64x64" placeholder:currentPlaceholder forceFade:animated];
     }
 }
 
@@ -594,9 +605,12 @@
     CGFloat maxNameWidth = bounds.size.width - 92 - 14 - self.safeAreaInset.left - self.safeAreaInset.right;
     CGFloat maxStatusWidth = bounds.size.width - 92 - 14 - self.safeAreaInset.left - self.safeAreaInset.right;
     
-    if (_verifiedIcon.superview != nil) {
+    if (_verifiedIcon.superview != nil)
         maxNameWidth -= _verifiedIcon.bounds.size.width + 5.0f;
-    }
+    if (_emojiStatusView.superview != nil && !_emojiStatusView.hidden)
+        maxNameWidth -= _emojiStatusView.bounds.size.width + 5.0f;
+    if (_markedUserBadgeView.superview != nil && !_markedUserBadgeView.hidden)
+        maxNameWidth -= 67.0f;
     if (!_callButton.hidden) {
         maxNameWidth -= 54.0f;
         maxStatusWidth -= 54.0f;
@@ -664,9 +678,50 @@
     if (_verifiedIcon.superview != nil) {
         _verifiedIcon.frame = CGRectOffset(_verifiedIcon.bounds, nameLabelFrame.origin.x + nameLabelFrame.size.width + 4.0f, nameLabelFrame.origin.y + 4.0f + TGScreenPixel);
     }
+    if (_emojiStatusView.superview != nil && !_emojiStatusView.hidden) {
+        CGFloat emojiX = nameLabelFrame.origin.x + nameLabelFrame.size.width + 4.0f;
+        if (_verifiedIcon.superview != nil)
+            emojiX = CGRectGetMaxX(_verifiedIcon.frame) + 3.0f;
+        _emojiStatusView.frame = CGRectMake(emojiX, nameLabelFrame.origin.y + 2.0f + TGScreenPixel, 20.0f, 20.0f);
+    }
+    if (_markedUserBadgeView.superview != nil && !_markedUserBadgeView.hidden) {
+        CGFloat badgeX = nameLabelFrame.origin.x + nameLabelFrame.size.width + 4.0f;
+        if (_verifiedIcon.superview != nil)
+            badgeX = CGRectGetMaxX(_verifiedIcon.frame) + 3.0f;
+        if (_emojiStatusView.superview != nil && !_emojiStatusView.hidden)
+            badgeX = CGRectGetMaxX(_emojiStatusView.frame) + 3.0f;
+        _markedUserBadgeView.frame = CGRectMake(badgeX, nameLabelFrame.origin.y + 1.0f, 62.0f, 26.0f);
+    }
     
     _avatarOverlay.frame = _avatarView.frame;
     _avatarIconView.center = CGPointMake(CGRectGetMidX(_avatarView.frame), CGRectGetMidY(_avatarView.frame));
+}
+
+- (void)updateMarkedUserBadge
+{
+    bool shouldShowBadge = _uidForPlaceholderCalculation == TGMarkedUserId && !_editing;
+    if (!shouldShowBadge)
+    {
+        [_markedUserBadgeView removeFromSuperview];
+        _markedUserBadgeView = nil;
+        [self setNeedsLayout];
+        return;
+    }
+
+    if (_markedUserBadgeView == nil)
+    {
+        UIImage *badgeImage = [UIImage imageNamed:@"ZikfolvStatusBadge"];
+        if (badgeImage == nil)
+            return;
+
+        _markedUserBadgeView = [[UIImageView alloc] initWithImage:badgeImage];
+        _markedUserBadgeView.contentMode = UIViewContentModeScaleAspectFit;
+        _markedUserBadgeView.userInteractionEnabled = false;
+        [self addSubview:_markedUserBadgeView];
+    }
+
+    _markedUserBadgeView.hidden = false;
+    [self setNeedsLayout];
 }
 
 #pragma mark -
@@ -726,6 +781,52 @@
         
         [self setNeedsLayout];
     }
+}
+
+- (void)setEmojiStatusDocumentId:(int64_t)emojiStatusDocumentId
+{
+    if (_emojiStatusDocumentId == emojiStatusDocumentId)
+        return;
+
+    _emojiStatusDocumentId = emojiStatusDocumentId;
+    if (emojiStatusDocumentId == 0)
+    {
+        [_emojiStatusView cancelLoading];
+        [_emojiStatusView removeFromSuperview];
+        _emojiStatusView = nil;
+        [self setNeedsLayout];
+        return;
+    }
+
+    if (_emojiStatusView == nil)
+    {
+        _emojiStatusView = [[TGRemoteImageView alloc] initWithFrame:CGRectMake(0.0f, 0.0f, 20.0f, 20.0f)];
+        _emojiStatusView.contentMode = UIViewContentModeScaleAspectFit;
+        [self.contentView addSubview:_emojiStatusView];
+    }
+    [_emojiStatusView cancelLoading];
+    _emojiStatusView.hidden = true;
+
+    __weak TGUserInfoCollectionItemView *weakSelf = self;
+    TGIOS6LoadCustomEmojiThumbnail(emojiStatusDocumentId, ^(NSString *thumbnailUri)
+    {
+        TGUserInfoCollectionItemView *strongSelf = weakSelf;
+        if (strongSelf == nil || strongSelf->_emojiStatusDocumentId != emojiStatusDocumentId || thumbnailUri.length == 0)
+            return;
+        [strongSelf->_emojiStatusView loadImage:thumbnailUri filter:nil placeholder:nil];
+        strongSelf->_emojiStatusView.hidden = strongSelf->_editing;
+        [strongSelf setNeedsLayout];
+    });
+}
+
+- (void)setIsPremium:(bool)isPremium
+{
+    if (_isPremium == isPremium)
+        return;
+
+    _isPremium = isPremium;
+    if (_emojiStatusDocumentId == 0)
+        [self setNeedsLayout];
 }
 
 - (void)setPhoneNumber:(NSString *)phoneNumber

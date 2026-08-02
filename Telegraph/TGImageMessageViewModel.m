@@ -833,9 +833,13 @@ static CTFontRef textFontForSize(CGFloat size)
     
     imageSize.width = MIN(imageTargetMaxSize.width, imageSize.width);
     imageSize.height = MIN(imageTargetMaxSize.height, imageSize.height);
-    
-    imageSize.width = MAX(imageTargetMinSize.width, imageSize.width);
-    imageSize.height = MAX(imageTargetMinSize.height, imageSize.height);
+
+    if (imageSize.width < imageTargetMinSize.width && imageSize.height < imageTargetMinSize.height)
+    {
+        CGFloat scale = MAX(imageTargetMinSize.width / imageSize.width, imageTargetMinSize.height / imageSize.height);
+        imageSize.width = CGCeil(imageSize.width * scale);
+        imageSize.height = CGCeil(imageSize.height * scale);
+    }
     
     if (thumbnailSize != NULL)
        *thumbnailSize = imageSize;

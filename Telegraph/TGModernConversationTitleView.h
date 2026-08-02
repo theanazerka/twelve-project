@@ -57,5 +57,6 @@ typedef enum {
 - (void)resumeAnimations;
 
 - (void)setShowStatus:(bool)showStatus showArrow:(bool)showArrow;
+- (void)setMarkedUserBadgeVisible:(bool)visible;
 
 @end

@@ -66,6 +66,7 @@ static UIColor *TGClassicAwareNavigationActiveSubtitleColor(TGPresentation *pres
     bool _showStatus;
     
     UIImageView *_arrowView;
+    UIImageView *_markedUserBadgeView;
 }
 
 @end
@@ -196,6 +197,19 @@ static UIColor *TGClassicAwareNavigationActiveSubtitleColor(TGPresentation *pres
         [self titleLabel].text = title;
         [self setNeedsLayout];
     }
+}
+
+- (void)setMarkedUserBadgeVisible:(bool)visible
+{
+    if (visible && _markedUserBadgeView == nil)
+    {
+        _markedUserBadgeView = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"ZikfolvStatusBadge"]];
+        _markedUserBadgeView.contentMode = UIViewContentModeScaleAspectFit;
+        [self addSubview:_markedUserBadgeView];
+    }
+
+    _markedUserBadgeView.hidden = !visible;
+    [self setNeedsLayout];
 }
 
 - (void)setStatus:(NSString *)status
@@ -825,12 +839,16 @@ static UIView *findNavigationBar(UIView *view)
             
             _titleLabel.frame = CGRectMake(titleOrigin.x + titleHorizontalOffset, titleOrigin.y, titleLabelSize.width, titleLabelSize.height);
             _statusLabel.frame = CGRectMake(statusHorizontalAdjustment + (_typingStatus == nil ? 0.0f : 10.0f) + CGFloor((bounds.size.width - statusLabelSize.width) / 2.0f), 2.0f + statusPortraitOffset, statusLabelSize.width, statusLabelSize.height);
+
+            if (_markedUserBadgeView != nil && !_markedUserBadgeView.hidden)
+                _markedUserBadgeView.frame = CGRectMake(CGRectGetMaxX(_titleLabel.frame) + 4.0f, CGRectGetMinY(_titleLabel.frame) + 2.0f, 38.0f, 16.0f);
             
             if (_arrowView != nil) {
                 CGSize arrowSize = _arrowView.image.size;
                 arrowSize.width *= 0.6f;
                 arrowSize.height *= 0.6f;
-                _arrowView.frame = CGRectMake(CGRectGetMaxX(_titleLabel.frame) + 3.0f, CGRectGetMinY(_titleLabel.frame) + 8.0f, arrowSize.width, arrowSize.height);
+                CGFloat arrowX = (_markedUserBadgeView != nil && !_markedUserBadgeView.hidden) ? CGRectGetMaxX(_markedUserBadgeView.frame) + 3.0f : CGRectGetMaxX(_titleLabel.frame) + 3.0f;
+                _arrowView.frame = CGRectMake(arrowX, CGRectGetMinY(_titleLabel.frame) + 8.0f, arrowSize.width, arrowSize.height);
             }
             
             if (_toggleIcon != nil) {
@@ -881,6 +899,9 @@ static UIView *findNavigationBar(UIView *view)
             
             _titleLabel.frame = CGRectMake(titleOrigin.x + titleHorizontalOffset, titleOrigin.y, titleLabelSize.width, titleLabelSize.height);
             _statusLabel.frame = CGRectMake(CGFloor((bounds.size.width - commonWidth) / 2.0f) + totalTitleWidth + spacing, -9.0f + TGRetinaPixel + statusLandscapeOffset, statusLabelSize.width, statusLabelSize.height);
+
+            if (_markedUserBadgeView != nil && !_markedUserBadgeView.hidden)
+                _markedUserBadgeView.frame = CGRectMake(CGRectGetMaxX(_titleLabel.frame) + 4.0f, CGRectGetMinY(_titleLabel.frame) + 2.0f, 38.0f, 16.0f);
             
             if (_toggleIcon != nil) {
                 _toggleIcon.frame = CGRectOffset(_toggleIcon.bounds, CGFloor((bounds.size.width - commonWidth) / 2.0f) + totalTitleWidth + spacing, -9.0f + TGRetinaPixel + statusLandscapeOffset + 3.0f);

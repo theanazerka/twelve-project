@@ -53,9 +53,6 @@
 
 #import "TGFaqController.h"
 
-#import "TGBridgeServer.h"
-#import "TGWatchController.h"
-
 #import "../submodules/LegacyComponents/LegacyComponents/TGMediaAvatarMenuMixin.h"
 #import "TGWebSearchController.h"
 
@@ -73,6 +70,7 @@
 #import "TGEditProfileController.h"
 
 #import "TGAppearanceController.h"
+#import "TGPresentation.h"
 #import "TGProxySetupController.h"
 #import "TGPassportRequestController.h"
 
@@ -80,7 +78,7 @@
 
 #import "TGLegacyComponentsContext.h"
 
-@interface TGAccountSettingsController ()
+@interface TGAccountSettingsController () <UIAlertViewDelegate>
 {
     int32_t _uid;
     
@@ -115,8 +113,7 @@
     
     TGCollectionMenuSection *_otherSection;
     TGDisclosureActionCollectionItem *_passportItem;
-    TGDisclosureActionCollectionItem *_watchItem;
-    SMetaDisposable *_watchAppInstalledDisposable;
+    SMetaDisposable *_passportStatusDisposable;
     
     id<SDisposable> _stickerPacksDisposable;
     id<SDisposable> _updatedFeaturedStickerPacksDisposable;
@@ -129,6 +126,12 @@
 @end
 
 @implementation TGAccountSettingsController
+
+static NSString *TGAccountGroqApiKeyDefaultsKey(void)
+{
+    int32_t userId = TGTelegraphInstance.clientUserId;
+    return userId != 0 ? [NSString stringWithFormat:@"TGGroqAPIKey.%d", userId] : @"TGGroqAPIKey";
+}
 
 - (id)initWithUid:(int32_t)uid
 {
@@ -194,8 +197,6 @@
         }];
         
         _passportItem = [[TGDisclosureActionCollectionItem alloc] initWithTitle:TGLocalized(@"Settings.Passport") action:@selector(passportPressed)];
-        _watchItem = [[TGDisclosureActionCollectionItem alloc] initWithTitle:TGLocalized(@"Settings.AppleWatch") action:@selector(watchPressed)];
-        
         _otherSection =  [[TGCollectionMenuSection alloc] initWithItems:@[]];
         _otherSection.insets = UIEdgeInsetsZero;
         [self.menuSections addSection:_otherSection];
@@ -274,7 +275,7 @@
 
 - (void)dealloc
 {
-    [_watchAppInstalledDisposable dispose];
+    [_passportStatusDisposable dispose];
     [_stickerPacksDisposable dispose];
     [_updatedFeaturedStickerPacksDisposable dispose];
     [_actionHandle reset];
@@ -296,7 +297,6 @@
     _stickerSettingsItem.icon = TGImageNamed(@"SettingsStickersIcon.png");
     _languageItem.icon = TGImageNamed(@"SettingsLanguageIcon.png");
     _passportItem.icon = TGImageNamed(@"SettingsPassportIcon.png");
-    _watchItem.icon = TGImageNamed(@"SettingsWatchIcon.png");
     _supportItem.icon = TGImageNamed(@"SettingsSupportIcon.png");
     _faqItem.icon = TGImageNamed(@"SettingsFaqIcon.png");
     _donateItem.icon = TGImageNamed(@"SettingsDonateIcon.png");
@@ -335,12 +335,8 @@
     
     __weak TGAccountSettingsController *weakSelf = self;
     
-    SSignal *watchAppSignal = [[TGBridgeServer instanceSignal] mapToSignal:^SSignal *(TGBridgeServer *bridgeServer) {
-        return [bridgeServer watchAppInstalledSignal];
-    }];
-    
-    _watchAppInstalledDisposable = [[SMetaDisposable alloc] init];
-    [_watchAppInstalledDisposable setDisposable:[[[SSignal combineSignals:@[[TGPassportSignals hasPassport], watchAppSignal] withInitialStates:@[@false, @false]] deliverOn:[SQueue mainQueue]] startWithNext:^(NSArray *next)
+    _passportStatusDisposable = [[SMetaDisposable alloc] init];
+    [_passportStatusDisposable setDisposable:[[[TGPassportSignals hasPassport] deliverOn:[SQueue mainQueue]] startWithNext:^(NSNumber *next)
     {
         __strong TGAccountSettingsController *strongSelf = weakSelf;
         if (strongSelf == nil)
@@ -350,13 +346,9 @@
         if (otherSectionIndex == NSNotFound)
             return;
         
-        bool hasPassport = [(NSNumber *)[next objectAtIndex:0] boolValue];
+        bool hasPassport = [next boolValue];
         NSUInteger indexOfPassportItem = [strongSelf.menuSections.sections[otherSectionIndex] indexOfItem:strongSelf->_passportItem];
         bool hasPassportItem = indexOfPassportItem != NSNotFound;
-        
-        bool hasWatchApp = [(NSNumber *)[next lastObject] boolValue];
-        NSUInteger indexOfWatchItem = [strongSelf.menuSections.sections[otherSectionIndex] indexOfItem:strongSelf->_watchItem];
-        bool hasWatchItem = indexOfWatchItem != NSNotFound;
         
         if (hasPassport != hasPassportItem)
         {
@@ -370,20 +362,7 @@
             [strongSelf.menuSections commitRecordedChanges:strongSelf.collectionView];
         }
         
-        if (hasWatchApp != hasWatchItem)
-        {
-            indexOfWatchItem = [strongSelf.menuSections.sections[otherSectionIndex] indexOfItem:strongSelf->_watchItem];
-            [strongSelf.menuSections beginRecordingChanges];
-            if (hasWatchApp) {
-                [strongSelf.menuSections insertItem:strongSelf->_watchItem toSection:otherSectionIndex atIndex:strongSelf->_otherSection.items.count];
-            }
-            else {
-                [strongSelf.menuSections deleteItemFromSection:otherSectionIndex atIndex:indexOfWatchItem];
-            }
-            [strongSelf.menuSections commitRecordedChanges:strongSelf.collectionView];
-        }
-        
-        UIEdgeInsets targetInsets = hasPassport || hasWatchApp ? UIEdgeInsetsMake(0.0f, 0.0f, 35.0f, 0.0f) : UIEdgeInsetsZero;
+        UIEdgeInsets targetInsets = hasPassport ? UIEdgeInsetsMake(0.0f, 0.0f, 35.0f, 0.0f) : UIEdgeInsetsZero;
         if (!UIEdgeInsetsEqualToEdgeInsets(strongSelf->_otherSection.insets, targetInsets)) {
             strongSelf->_otherSection.insets = targetInsets;
             [UIView animateWithDuration:0.3 animations:^{
@@ -580,7 +559,7 @@
     TGUser *user = [TGDatabaseInstance() loadUser:_uid];
     [self updateSuggestedSetProfilePhoto:false setUsername:user.userName.length == 0];
     
-    TGImageProcessor filter = [TGRemoteImageView imageProcessorForName:@"circle:64x64"];
+    TGImageProcessor filter = [TGRemoteImageView imageProcessorForName:[TGPresentation classicIOS6Style] ? @"avatar64" : @"circle:64x64"];
     UIImage *avatarImage = filter(image);
     
     [_profileDataItem setUpdatingAvatar:avatarImage hasUpdatingAvatar:true];
@@ -766,6 +745,34 @@
 - (void)mySettingsPressed
 {
     [self.navigationController pushViewController:[[TGSettingsController alloc] init] animated:true];
+}
+
+- (void)groqApiKeyPressed
+{
+    UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Groq API key"
+                                                    message:@"The key is stored only on this device and is sent directly to Groq."
+                                                   delegate:self
+                                          cancelButtonTitle:@"Cancel"
+                                          otherButtonTitles:@"Save", nil];
+    alert.alertViewStyle = UIAlertViewStyleSecureTextInput;
+    UITextField *field = [alert textFieldAtIndex:0];
+    field.placeholder = @"gsk_...";
+    field.text = [[NSUserDefaults standardUserDefaults] stringForKey:TGAccountGroqApiKeyDefaultsKey()];
+    [alert show];
+}
+
+- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
+{
+    if (![alertView.title isEqualToString:@"Groq API key"] || buttonIndex != 1)
+        return;
+
+    UITextField *field = [alertView textFieldAtIndex:0];
+    NSString *key = [field.text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    if (key.length != 0)
+        [[NSUserDefaults standardUserDefaults] setObject:key forKey:TGAccountGroqApiKeyDefaultsKey()];
+    else
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:TGAccountGroqApiKeyDefaultsKey()];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 - (void)supportPressed
@@ -1047,12 +1054,6 @@
     [self.navigationController pushViewController:controller animated:true];
 }
 
-- (void)watchPressed
-{
-    TGWatchController *controller = [[TGWatchController alloc] init];
-    [self.navigationController pushViewController:controller animated:true];
-}
-
 - (void)proxyPressed
 {
     TGProxySetupController *controller = [[TGProxySetupController alloc] init];
@@ -1086,7 +1087,6 @@
     
     _proxyItem.title = TGLocalized(@"Settings.Proxy");
     _passportItem.title = TGLocalized(@"Settings.Passport");
-    _watchItem.title = TGLocalized(@"Settings.AppleWatch");
     
     NSUInteger sectionIndex = [self.menuSections.sections indexOfObject:_proxySection];
     if (sectionIndex != NSNotFound)

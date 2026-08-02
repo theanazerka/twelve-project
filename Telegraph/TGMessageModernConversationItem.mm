@@ -957,6 +957,50 @@ static UIColor *coloredNameForUid(int uid, __unused int currentUserId)
                         [model layoutForContainerSize:containerSize];
                         return model;
                     } else {
+                        // A previous build could have written video notes to
+                        // the message database as documents. Reconstruct the
+                        // video attachment while rendering, so old cache data
+                        // takes the round-video player path instead of being
+                        // handed to the system as an arbitrary file.
+                        if ([documentAttachment isRoundVideo])
+                        {
+                            TGDocumentAttributeVideo *videoAttribute = nil;
+                            for (id attribute in documentAttachment.attributes)
+                            {
+                                if ([attribute isKindOfClass:[TGDocumentAttributeVideo class]])
+                                {
+                                    videoAttribute = (TGDocumentAttributeVideo *)attribute;
+                                    break;
+                                }
+                            }
+                            
+                            if (videoAttribute != nil)
+                            {
+                                TGVideoMediaAttachment *video = [[TGVideoMediaAttachment alloc] init];
+                                video.videoId = documentAttachment.documentId;
+                                video.localVideoId = documentAttachment.localDocumentId;
+                                video.accessHash = documentAttachment.accessHash;
+                                video.duration = videoAttribute.duration;
+                                video.dimensions = videoAttribute.size;
+                                video.thumbnailInfo = documentAttachment.thumbnailInfo;
+                                video.caption = documentAttachment.caption;
+                                video.roundMessage = true;
+                                video.originInfo = documentAttachment.originInfo;
+                                
+                                TGVideoInfo *videoInfo = [[TGVideoInfo alloc] init];
+                                [videoInfo addVideoWithQuality:1 url:[[NSString alloc] initWithFormat:@"video:%lld:%lld:%d:%d", video.videoId, video.accessHash, documentAttachment.datacenterId, documentAttachment.size] size:documentAttachment.size];
+                                video.videoInfo = videoInfo;
+                                
+                                TGRoundMessageViewModel *model = [[TGRoundMessageViewModel alloc] initWithMessage:_message video:video authorPeer:useAuthor ? [self currentAuthorPeer] : nil context:_context forwardPeer:forwardPeer forwardAuthor:forwardAuthor forwardMessageId:forwardMessageId replyHeader:replyMessage replyPeer:replyPeer];
+                                if (useAuthor) {
+                                    [self _setupMessageAuthor:model];
+                                }
+                                model.collapseFlags = _collapseFlags;
+                                [model layoutForContainerSize:containerSize];
+                                return model;
+                            }
+                        }
+
                         bool isAnimated = false;
                         CGSize imageSize = CGSizeZero;
                         bool isSticker = false;
@@ -1328,11 +1372,13 @@ static inline TGCachedMessageType getMessageType(TGMessageModernConversationItem
 - (void)updateGroupedLayout:(TGMessageGroupedLayout *)groupedLayout
 {
     _groupedLayout = groupedLayout;
-    _viewModel.groupedLayout = groupedLayout;
     if (groupedLayout != nil)
         _positionFlags = [groupedLayout positionForMessageId:_message.mid];
     else
         _positionFlags = TGMessageGroupPositionNone;
+
+    _viewModel.positionFlags = _positionFlags;
+    _viewModel.groupedLayout = groupedLayout;
     
     _layoutIsInvalid = true;
 }

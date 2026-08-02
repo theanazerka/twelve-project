@@ -124,7 +124,7 @@
     else if (!TGStringCompare([_avatarView currentUrl], avatarUri))
     {
         _avatarView.fadeTransitionDuration = animated ? 0.3 : 0.1;
-        [_avatarView loadImage:avatarUri filter:@"circle:64x64" placeholder:currentPlaceholder forceFade:animated];
+        [_avatarView loadImage:avatarUri filter:[TGPresentation classicIOS6Style] ? @"avatar64" : @"circle:64x64" placeholder:currentPlaceholder forceFade:animated];
     }
 }
 

@@ -253,7 +253,52 @@ static UIImage *TGIOS6StickerReactionButtonImage(NSString *emoji, NSInteger coun
 
 - (bool)shouldKeepEmojiFallbackForDocument:(TGDocumentMediaAttachment *)document
 {
-    return [self needsEmojiFallbackForDocument:document];
+    // Animated sticker payloads (.tgs/.webm) cannot be decoded on iOS 6.
+    // They use the same static preview loader as the sticker keyboard instead.
+    // Keep the alt emoji only while that preview is still loading.
+    return false;
+}
+
+- (NSString *)stickerImageUriForDocument:(TGDocumentMediaAttachment *)document displaySize:(CGSize)displaySize
+{
+    bool useStaticPreview = [self needsEmojiFallbackForDocument:document];
+    NSMutableString *uri = [[NSMutableString alloc] initWithString:(useStaticPreview ? @"sticker-preview://?" : @"sticker://?")];
+    if (document.documentId != 0)
+    {
+        [uri appendFormat:@"&documentId=%" PRId64, document.documentId];
+
+        TGMediaOriginInfo *originInfo = document.originInfo ?: [TGMediaOriginInfo mediaOriginInfoForDocumentAttachment:document];
+        if (originInfo != nil)
+            [uri appendFormat:@"&origin_info=%@", [originInfo stringRepresentation]];
+    }
+    else
+    {
+        [uri appendFormat:@"&localDocumentId=%" PRId64, document.localDocumentId];
+    }
+    [uri appendFormat:@"&accessHash=%" PRId64, document.accessHash];
+    [uri appendFormat:@"&datacenterId=%d", (int)document.datacenterId];
+
+    if (useStaticPreview)
+    {
+        NSString *legacyThumbnailUri = [document.thumbnailInfo imageUrlForLargestSize:NULL];
+        if (legacyThumbnailUri.length != 0)
+            [uri appendFormat:@"&legacyThumbnailUri=%@", [TGStringUtils stringByEscapingForURL:legacyThumbnailUri]];
+        [uri appendFormat:@"&fileName=%@", [TGStringUtils stringByEscapingForURL:[document safeFileName]]];
+        [uri appendFormat:@"&size=%d", (int)document.size];
+        if (document.mimeType.length != 0)
+            [uri appendFormat:@"&mimeType=%@", [TGStringUtils stringByEscapingForURL:document.mimeType]];
+        [uri appendFormat:@"&width=%d&height=%d&highQuality=1", (int)displaySize.width, (int)displaySize.height];
+    }
+    else
+    {
+        [uri appendFormat:@"&fileName=%@", [TGStringUtils stringByEscapingForURL:document.fileName]];
+        [uri appendFormat:@"&size=%d", (int)document.size];
+        [uri appendFormat:@"&width=%d&height=%d", (int)displaySize.width, (int)displaySize.height];
+        [uri appendFormat:@"&mime-type=%@", [TGStringUtils stringByEscapingForURL:document.mimeType]];
+        if (document.documentUri.length != 0)
+            [uri appendFormat:@"&documentUri=%@", [TGStringUtils stringByEscapingForURL:document.documentUri]];
+    }
+    return uri;
 }
 
 - (bool)stickerImageIsLocallyAvailable:(TGDocumentMediaAttachment *)document
@@ -395,29 +440,7 @@ static UIImage *TGIOS6StickerReactionButtonImage(NSString *emoji, NSInteger coun
         
         CGSize displaySize = [self displaySizeForSize:_size];
         
-        NSMutableString *imageUri = [[NSMutableString alloc] init];
-        [imageUri appendString:@"sticker://?"];
-        if (_document.documentId != 0)
-        {
-            [imageUri appendFormat:@"&documentId=%" PRId64, _document.documentId];
-            
-            TGMediaOriginInfo *originInfo = _document.originInfo ?: [TGMediaOriginInfo mediaOriginInfoForDocumentAttachment:_document];
-            if (originInfo != nil)
-                [imageUri appendFormat:@"&origin_info=%@", [originInfo stringRepresentation]];
-        }
-        else
-        {
-            [imageUri appendFormat:@"&localDocumentId=%" PRId64, _document.localDocumentId];
-        }
-        [imageUri appendFormat:@"&accessHash=%" PRId64, _document.accessHash];
-        [imageUri appendFormat:@"&datacenterId=%d", (int)_document.datacenterId];
-        [imageUri appendFormat:@"&fileName=%@", [TGStringUtils stringByEscapingForURL:_document.fileName]];
-        [imageUri appendFormat:@"&size=%d", (int)_document.size];
-        [imageUri appendFormat:@"&width=%d&height=%d", (int)displaySize.width, (int)displaySize.height];
-        [imageUri appendFormat:@"&mime-type=%@", [TGStringUtils stringByEscapingForURL:_document.mimeType]];
-        if (_document.documentUri.length != 0) {
-            [imageUri appendFormat:@"&documentUri=%@", [TGStringUtils stringByEscapingForURL:_document.documentUri]];
-        }
+        NSString *imageUri = [self stickerImageUriForDocument:_document displaySize:displaySize];
         
         [_imageModel setUri:imageUri];
         
@@ -753,29 +776,7 @@ static UIImage *TGIOS6StickerReactionButtonImage(NSString *emoji, NSInteger coun
     
     CGSize displaySize = [self displaySizeForSize:_size];
     
-    NSMutableString *imageUri = [[NSMutableString alloc] init];
-    [imageUri appendString:@"sticker://?"];
-    if (_document.documentId != 0)
-    {
-        [imageUri appendFormat:@"&documentId=%" PRId64, _document.documentId];
-        
-        TGMediaOriginInfo *originInfo = _document.originInfo ?: [TGMediaOriginInfo mediaOriginInfoForDocumentAttachment:_document];
-        if (originInfo != nil)
-            [imageUri appendFormat:@"&origin_info=%@", [originInfo stringRepresentation]];
-    }
-    else
-    {
-        [imageUri appendFormat:@"&localDocumentId=%" PRId64, _document.localDocumentId];
-    }
-    [imageUri appendFormat:@"&accessHash=%" PRId64, _document.accessHash];
-    [imageUri appendFormat:@"&datacenterId=%d", (int)_document.datacenterId];
-    [imageUri appendFormat:@"&fileName=%@", [TGStringUtils stringByEscapingForURL:_document.fileName]];
-    [imageUri appendFormat:@"&size=%d", (int)_document.size];
-    [imageUri appendFormat:@"&width=%d&height=%d", (int)displaySize.width, (int)displaySize.height];
-    [imageUri appendFormat:@"&mime-type=%@", [TGStringUtils stringByEscapingForURL:_document.mimeType]];
-    if (_document.documentUri.length != 0) {
-        [imageUri appendFormat:@"&documentUri=%@", [TGStringUtils stringByEscapingForURL:_document.documentUri]];
-    }
+    NSString *imageUri = [self stickerImageUriForDocument:_document displaySize:displaySize];
     
     [_imageModel setUri:imageUri];
     
@@ -926,11 +927,8 @@ static UIImage *TGIOS6StickerReactionButtonImage(NSString *emoji, NSInteger coun
     }
     
     UIView *backgroundView = [_imageModel boundView];
-    if (![self needsEmojiFallbackForDocument:_document])
-    {
-        [backgroundView addGestureRecognizer:_tapGestureRecognizer];
-        [backgroundView addGestureRecognizer:_boundDoubleTapRecognizer];
-    }
+    [backgroundView addGestureRecognizer:_tapGestureRecognizer];
+    [backgroundView addGestureRecognizer:_boundDoubleTapRecognizer];
     
     [self updateEmojiFallbackLabel];
     

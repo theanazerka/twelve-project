@@ -983,12 +983,17 @@ public:
     }
     
     __weak TGVideoDownloadActor *weakSelf = self;
-    [_fileReferenceDisposable setDisposable:[[TGDownloadMessagesSignal updatedOriginInfo:originInfo identifier:self.videoAttachment.videoId] startWithNext:^(TGMediaOriginInfo *next)
+    [_fileReferenceDisposable setDisposable:[[TGDownloadMessagesSignal updatedOriginInfo:originInfo identifier:_videoId] startWithNext:^(TGMediaOriginInfo *next)
     {
         [ActionStageInstance() dispatchOnStageQueue:^{
             __strong TGVideoDownloadActor *strongSelf = weakSelf;
             if (strongSelf != nil) {
                 strongSelf->_isUpdatingFileReference = false;
+                if (next == nil || next.fileReference.length == 0)
+                {
+                    [strongSelf videoPartDownloadFailed:offset length:length];
+                    return;
+                }
                 strongSelf->_originInfo = next;
                 [strongSelf downloadFileParts];
             }
@@ -998,6 +1003,7 @@ public:
         [ActionStageInstance() dispatchOnStageQueue:^{
             __strong TGVideoDownloadActor *strongSelf = weakSelf;
             if (strongSelf != nil) {
+                strongSelf->_isUpdatingFileReference = false;
                 [strongSelf videoPartDownloadFailed:offset length:length];
             }
         }];

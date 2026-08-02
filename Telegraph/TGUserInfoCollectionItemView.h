@@ -15,6 +15,8 @@
 @interface TGUserInfoCollectionItemView : TGCollectionItemView
 
 @property (nonatomic) bool isVerified;
+@property (nonatomic) bool isPremium;
+@property (nonatomic) int64_t emojiStatusDocumentId;
 @property (nonatomic, strong) NSDictionary *customProperties;
 
 @property (nonatomic, strong) ASHandle *itemHandle;

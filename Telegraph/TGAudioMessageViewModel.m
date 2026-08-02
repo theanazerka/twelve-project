@@ -13,7 +13,6 @@
 #import "TGModernViewContext.h"
 #import "TGTelegraphConversationMessageAssetsSource.h"
 #import "TGModernConversationItem.h"
-#import "TGModernButtonViewModel.h"
 #import "TGTextMessageBackgroundViewModel.h"
 #import "TGModernLabelViewModel.h"
 #import "TGModernFlatteningViewModel.h"
@@ -67,7 +66,6 @@ typedef enum {
     
     TGModernTextViewModel *_textModel;
     TGDocumentMessageIconModel *_iconModel;
-    TGModernButtonViewModel *_transcribeButtonModel;
     
     TGAudioSliderViewModel *_sliderModel;
     
@@ -138,31 +136,6 @@ static CTFontRef textFontForSize(CGFloat size)
             _textModel.additionalTrailingWidth += 10.0f;
         [_contentModel addSubmodel:_textModel];
 
-        bool isVoiceMessage = _audioMedia != nil;
-        for (id attribute in _documentMedia.attributes) {
-            if ([attribute isKindOfClass:[TGDocumentAttributeAudio class]] && ((TGDocumentAttributeAudio *)attribute).isVoice) {
-                isVoiceMessage = true;
-                break;
-            }
-        }
-        if (isVoiceMessage && !TGPeerIdIsSecretChat(message.cid) && transcription.length == 0)
-        {
-            _transcribeButtonModel = [[TGModernButtonViewModel alloc] init];
-            _transcribeButtonModel.presentation = context.presentation;
-            _transcribeButtonModel.title = @"→A";
-            _transcribeButtonModel.font = TGBoldSystemFontOfSize(15.0f);
-            _transcribeButtonModel.titleColor = _incomingAppearance ? context.presentation.pallete.chatIncomingLinkColor : context.presentation.pallete.chatOutgoingLinkColor;
-            _transcribeButtonModel.extendedEdgeInsets = UIEdgeInsetsMake(8.0f, 8.0f, 8.0f, 8.0f);
-            __weak TGAudioMessageViewModel *weakSelf = self;
-            _transcribeButtonModel.pressed = ^
-            {
-                __strong TGAudioMessageViewModel *strongSelf = weakSelf;
-                if (strongSelf != nil)
-                    [strongSelf->_context.companionHandle requestAction:@"transcribeAudioRequested" options:@{@"mid": @(strongSelf->_mid), @"peerId": @(message.cid)}];
-            };
-            [self addSubmodel:_transcribeButtonModel];
-        }
-        
         _duration = duration;
         _size = size;
         _fileType = fileType;
@@ -253,8 +226,6 @@ static CTFontRef textFontForSize(CGFloat size)
     
     NSString *transcription = message.contentProperties[@"ios6Transcription"];
     NSString *displayText = transcription.length != 0 ? transcription : message.caption;
-    if (_transcribeButtonModel != nil)
-        _transcribeButtonModel.hidden = transcription.length != 0;
     if (!TGStringCompare(_textModel.text, displayText)) {
         _textModel.text = displayText;
         _textModel.textCheckingResults = message.textCheckingResults;
@@ -312,7 +283,7 @@ static CTFontRef textFontForSize(CGFloat size)
     
     [_sliderModel bindViewToContainer:container viewStorage:viewStorage];
     [_sliderModel boundView].frame = CGRectOffset([_sliderModel boundView].frame, itemPosition.x, itemPosition.y);
-    
+
     [self subscribeStatus];
 }
 
@@ -360,7 +331,7 @@ static CTFontRef textFontForSize(CGFloat size)
     ((TGDocumentMessageIconView *)iconView).delegate = nil;
     
     ((TGAudioSliderView *)[_sliderModel boundView]).delegate = nil;
-    
+
     [super unbindView:viewStorage];
     
     [_playingAudioMessageIdDisposable dispose];
@@ -483,11 +454,8 @@ static CTFontRef textFontForSize(CGFloat size)
     _iconModel.frame = CGRectMake(_backgroundModel.frame.origin.x + (_incomingAppearance ? 14.0f : 9.0f), _headerHeight + _backgroundModel.frame.origin.y + 12.0f, 37.0f, 37.0f);
     
     CGFloat trackOriginX = CGRectGetMaxX(_iconModel.frame) + 5.0f;
-    CGFloat transcribeWidth = _transcribeButtonModel == nil || _transcribeButtonModel.hidden ? 0.0f : 31.0f;
-    CGRect sliderFrame = CGRectMake(trackOriginX, _iconModel.frame.origin.y - 3.0f, CGRectGetMaxX(_backgroundModel.frame) - trackOriginX - 13.0f - transcribeWidth + (_incomingAppearance ? 5.0f : 0.0f), 14.0f);
+    CGRect sliderFrame = CGRectMake(trackOriginX, _iconModel.frame.origin.y - 3.0f, CGRectGetMaxX(_backgroundModel.frame) - trackOriginX - 13.0f + (_incomingAppearance ? 5.0f : 0.0f), 14.0f);
     _sliderModel.frame = sliderFrame;
-    if (_transcribeButtonModel != nil && !_transcribeButtonModel.hidden)
-        _transcribeButtonModel.frame = CGRectMake(CGRectGetMaxX(sliderFrame) + 2.0f, _iconModel.frame.origin.y - 5.0f, transcribeWidth, 29.0f);
 }
 
 - (void)audioSliderViewDidBeginPositionAdjustment:(TGAudioSliderView *)__unused audioSliderView

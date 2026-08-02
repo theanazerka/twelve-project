@@ -2147,7 +2147,7 @@ static NSArray *editingButtonTypes(bool muted, bool pinnable, bool pinned, bool 
             titleLabelWidth -= 12;
         
         if (_isVerified) {
-            titleLabelWidth -= _verifiedIcon.frame.size.width + 10.0f;
+            titleLabelWidth -= _verifiedIcon.bounds.size.width + 10.0f;
         }
         
         titleLabelWidth = MIN(titleLabelWidth, [_titleText sizeWithFont:_textView.titleFont].width);
@@ -2213,7 +2213,7 @@ static NSArray *editingButtonTypes(bool muted, bool pinnable, bool pinned, bool 
         
         _textView.titleFrame = titleRect;
         _textView.textFrame = messageRect;
-    
+
         _validSize = size;
         
         TG_TIMESTAMP_MEASURE(cellLayout);

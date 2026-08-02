@@ -77,10 +77,13 @@
 
 #include <map>
 #include <set>
+#include <math.h>
 
 #import "TGGroupManagementSignals.h"
 
 #import "TGTelegraph.h"
+#import "../../Telegraph/TGUserDataRequestBuilder.h"
+#import "../TL/TLRPCusers_getUsers.h"
 
 #import "TGLocalizationSignals.h"
 #import "TGSuggestedLocalizationController.h"
@@ -128,6 +131,104 @@ static const int32_t TGIOS6VectorConstructor = (int32_t)0x1cb5c415;
 }
 - (id<TLObject>)TLdeserialize:(NSInputStream *)__unused is signature:(int32_t)__unused signature environment:(id<TLSerializationEnvironment>)__unused environment context:(TLSerializationContext *)__unused context error:(__autoreleasing NSError **)__unused error { return nil; }
 @end
+
+extern "C" void TGIOS6LoadCustomEmojiThumbnail(int64_t documentId, void (^completion)(NSString *thumbnailUri))
+{
+    if (documentId == 0)
+    {
+        if (completion != nil)
+            completion(nil);
+        return;
+    }
+
+    static NSCache *cachedUris = nil;
+    static NSMutableDictionary *inFlightCompletions = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^
+    {
+        cachedUris = [[NSCache alloc] init];
+        cachedUris.countLimit = 128;
+        inFlightCompletions = [[NSMutableDictionary alloc] init];
+    });
+
+    NSNumber *documentKey = @(documentId);
+    NSString *cachedUri = [cachedUris objectForKey:documentKey];
+    if (cachedUri.length != 0)
+    {
+        if (completion != nil)
+            completion(cachedUri);
+        return;
+    }
+
+    @synchronized(inFlightCompletions)
+    {
+        if (completion != nil)
+        {
+            NSMutableArray *callbacks = inFlightCompletions[documentKey];
+            if (callbacks != nil)
+            {
+                [callbacks addObject:[completion copy]];
+                return;
+            }
+            inFlightCompletions[documentKey] = [NSMutableArray arrayWithObject:[completion copy]];
+        }
+        else if (inFlightCompletions[documentKey] != nil)
+            return;
+        else
+            inFlightCompletions[documentKey] = [[NSMutableArray alloc] init];
+    }
+
+    TGIOS6GetCustomEmojiDocumentsRequest *request = [[TGIOS6GetCustomEmojiDocumentsRequest alloc] init];
+    request.documentIds = @[ @(documentId) ];
+    [[TGTelegramNetworking instance] performRpc:request completionBlock:^(id result, __unused int64_t responseTime, MTRpcError *error)
+    {
+        NSString *thumbnailUri = nil;
+        if (error == nil && [result isKindOfClass:[NSArray class]])
+        {
+            for (id documentDesc in (NSArray *)result)
+            {
+                if (![documentDesc isKindOfClass:[TLDocument class]])
+                    continue;
+                TGDocumentMediaAttachment *document = [[TGDocumentMediaAttachment alloc] initWithTelegraphDocumentDesc:documentDesc];
+                if (document.documentId == documentId)
+                {
+                    NSMutableString *uri = [[NSMutableString alloc] initWithString:@"sticker-preview://?"];
+                    [uri appendFormat:@"documentId=%" PRId64, document.documentId];
+                    [uri appendFormat:@"&accessHash=%" PRId64, document.accessHash];
+                    [uri appendFormat:@"&datacenterId=%" PRId32, document.datacenterId];
+                    TGMediaOriginInfo *originInfo = document.originInfo ?: [TGMediaOriginInfo mediaOriginInfoForDocumentAttachment:document];
+                    if (originInfo != nil)
+                        [uri appendFormat:@"&origin_info=%@", [originInfo stringRepresentation]];
+                    NSString *legacyThumbnailUri = [document.thumbnailInfo imageUrlForLargestSize:NULL];
+                    if (legacyThumbnailUri.length != 0)
+                        [uri appendFormat:@"&legacyThumbnailUri=%@", [TGStringUtils stringByEscapingForURL:legacyThumbnailUri]];
+                    [uri appendFormat:@"&fileName=%@", [TGStringUtils stringByEscapingForURL:[document safeFileName]]];
+                    [uri appendFormat:@"&size=%d", document.size];
+                    if (document.mimeType.length != 0)
+                        [uri appendFormat:@"&mimeType=%@", [TGStringUtils stringByEscapingForURL:document.mimeType]];
+                    [uri appendString:@"&width=40&height=40&highQuality=1"];
+                    thumbnailUri = uri;
+                    break;
+                }
+            }
+        }
+
+        if (thumbnailUri.length != 0)
+            [cachedUris setObject:thumbnailUri forKey:documentKey];
+
+        __block NSArray *callbacks = nil;
+        @synchronized(inFlightCompletions)
+        {
+            callbacks = [inFlightCompletions[documentKey] copy];
+            [inFlightCompletions removeObjectForKey:documentKey];
+        }
+        dispatch_async(dispatch_get_main_queue(), ^
+        {
+            for (void (^callback)(NSString *) in callbacks)
+                callback(thumbnailUri);
+        });
+    } progressBlock:nil requiresCompletion:true requestClass:TGRequestClassGeneric];
+}
 
 static UIColor *TGDialogListNavigationTitleColor(TGPresentation *presentation)
 {
@@ -227,6 +328,8 @@ static UIImage *TGIOS6CenteredScaledBarIcon(UIImage *image, CGFloat scale)
     bool _ios6ArchiveRefreshRequested;
     bool _ios6ArchiveItemsLoadRequested;
     NSSet *_ios6ArchivePeerIds;
+    NSTimeInterval _lastOwnEmojiStatusRefreshTime;
+    bool _ownEmojiStatusRefreshInFlight;
 }
 
 @property (nonatomic, strong) TGSearchBar *searchBar;
@@ -1090,50 +1193,65 @@ NSString *authorNameYou = @"  __TGLocalized__YOU";
     if (documentId == 0)
     {
         _titleEmojiStatusDocumentId = 0;
-        _titleEmojiStatusView.hidden = true;
         [_titleEmojiStatusView cancelLoading];
+        _titleEmojiStatusView.hidden = true;
         [self _layoutTitleViews:self.interfaceOrientation];
         return;
     }
-    if (_titleEmojiStatusDocumentId == documentId && !_titleEmojiStatusView.hidden)
+    _titleEmojiStatusDocumentId = documentId;
+    [_titleEmojiStatusView cancelLoading];
+    _titleEmojiStatusView.hidden = true;
+    [self _layoutTitleViews:self.interfaceOrientation];
+    __weak TGDialogListController *weakSelf = self;
+    TGIOS6LoadCustomEmojiThumbnail(documentId, ^(NSString *thumbnailUri)
+    {
+        TGDialogListController *strongSelf = weakSelf;
+        if (strongSelf == nil || strongSelf->_titleEmojiStatusDocumentId != documentId || thumbnailUri.length == 0)
+            return;
+        [strongSelf->_titleEmojiStatusView loadImage:thumbnailUri filter:nil placeholder:nil];
+        strongSelf->_titleEmojiStatusView.hidden = false;
+        [strongSelf _layoutTitleViews:strongSelf.interfaceOrientation];
+    });
+}
+
+- (void)refreshOwnEmojiStatusIfNeeded
+{
+    int32_t clientUserId = TGTelegraphInstance.clientUserId;
+    if (clientUserId == 0 || _ownEmojiStatusRefreshInFlight)
         return;
 
-    _titleEmojiStatusDocumentId = documentId;
-    _titleEmojiStatusView.hidden = true;
-    TGIOS6GetCustomEmojiDocumentsRequest *request = [[TGIOS6GetCustomEmojiDocumentsRequest alloc] init];
-    request.documentIds = @[ @(documentId) ];
+    TGUser *cachedUser = [TGDatabaseInstance() loadUser:clientUserId];
+    NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+    NSTimeInterval refreshInterval = cachedUser.emojiStatusDocumentId == 0 ? 30.0 : 300.0;
+    if (_lastOwnEmojiStatusRefreshTime > 0.0 && now - _lastOwnEmojiStatusRefreshTime < refreshInterval)
+        return;
+
+    _lastOwnEmojiStatusRefreshTime = now;
+    _ownEmojiStatusRefreshInFlight = true;
+
+    TLRPCusers_getUsers$users_getUsers *request = [[TLRPCusers_getUsers$users_getUsers alloc] init];
+    request.n_id = @[ [TGTelegraphInstance createInputUserForUid:clientUserId] ];
     __weak TGDialogListController *weakSelf = self;
     [[TGTelegramNetworking instance] performRpc:request completionBlock:^(id result, __unused int64_t responseTime, MTRpcError *error)
     {
-        if (error != nil || ![result isKindOfClass:[NSArray class]])
-            return;
-        for (id documentDesc in (NSArray *)result)
+        if (error == nil && [result isKindOfClass:[NSArray class]])
+            [TGUserDataRequestBuilder executeUserDataUpdate:(NSArray *)result];
+
+        dispatch_async(dispatch_get_main_queue(), ^
         {
-            if (![documentDesc isKindOfClass:[TLDocument class]])
-                continue;
-            TGDocumentMediaAttachment *document = [[TGDocumentMediaAttachment alloc] initWithTelegraphDocumentDesc:documentDesc];
-            if (document.documentId != documentId)
-                continue;
-            NSString *thumbnailUri = [document.thumbnailInfo imageUrlForLargestSize:NULL];
-            if (thumbnailUri.length == 0)
+            TGDialogListController *strongSelf = weakSelf;
+            if (strongSelf == nil)
                 return;
-            dispatch_async(dispatch_get_main_queue(), ^
-            {
-                TGDialogListController *strongSelf = weakSelf;
-                if (strongSelf == nil || strongSelf->_titleEmojiStatusDocumentId != documentId)
-                    return;
-                [strongSelf->_titleEmojiStatusView loadImage:thumbnailUri filter:nil placeholder:nil];
-                strongSelf->_titleEmojiStatusView.hidden = false;
-                [strongSelf _layoutTitleViews:strongSelf.interfaceOrientation];
-            });
-            return;
-        }
+            strongSelf->_ownEmojiStatusRefreshInFlight = false;
+            [strongSelf updateTitleEmojiStatus];
+        });
     } progressBlock:nil requiresCompletion:true requestClass:TGRequestClassGeneric];
 }
 
 - (void)viewWillAppear:(BOOL)animated
 {
     [super viewWillAppear:animated];
+    [self refreshOwnEmojiStatusIfNeeded];
     [self updateTitleEmojiStatus];
     
     [self updateProxyButton];

@@ -5,7 +5,6 @@
 #import "../submodules/LegacyComponents/LegacyComponents/ActionStage.h"
 #import "TGDownloadManager.h"
 
-#import "TGBridgeSignalManager.h"
 
 #import "TGPreparedLocalDocumentMessage.h"
 
@@ -238,17 +237,6 @@
             [adapter description];
         }];
     }];
-}
-
-+ (TGBridgeSignalManager *)signalManager
-{
-    static dispatch_once_t onceToken;
-    static TGBridgeSignalManager *signalManager;
-    dispatch_once(&onceToken, ^
-    {
-        signalManager = [[TGBridgeSignalManager alloc] init];
-    });
-    return signalManager;
 }
 
 + (NSString *)pathForDocumentMediaAttachment:(TGDocumentMediaAttachment *)documentMedia

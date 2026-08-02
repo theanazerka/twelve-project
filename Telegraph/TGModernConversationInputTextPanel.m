@@ -443,8 +443,6 @@ static CGRect viewFrame(UIView *view)
     UIImage *classicInputField = [TGPresentation classicIOS6Style] ? TGClassicIOS6InputPanelImage(@"InputField") : nil;
     _fieldBackground.image = classicInputField != nil ? [classicInputField stretchableImageWithLeftCapWidth:19 topCapHeight:21] : presentation.images.chatInputFieldImage;
 
-    // The iOS 6 theme changes only the field texture. Button behaviour and layout
-    // deliberately stay identical to the standard composer.
     _sendButtonWidth = 45.0f;
     [_attachButton setImage:presentation.images.chatInputAttachIcon forState:UIControlStateNormal];
     [_attachButton setImage:nil forState:UIControlStateHighlighted];

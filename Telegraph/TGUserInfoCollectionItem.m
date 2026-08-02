@@ -3,6 +3,7 @@
 #import "../submodules/LegacyComponents/LegacyComponents/LegacyComponents.h"
 
 #import "TGUserInfoCollectionItemView.h"
+#import "TGPresentation.h"
 
 #import "../submodules/LegacyComponents/LegacyComponents/TGRemoteImageView.h"
 
@@ -80,6 +81,8 @@
     view.customProperties = _user.customProperties;
     [view setFirstName:[self currentFirstName] lastName:[self currentLastName] uidForPlaceholderCalculation:_user.uid];
     view.isVerified = _user.isVerified;
+    view.isPremium = _user.isPremium;
+    view.emojiStatusDocumentId = _user.emojiStatusDocumentId;
     
     if (!_disableAvatar)
     {
@@ -171,6 +174,8 @@
         }
         
         view.isVerified = _user.isVerified;
+        view.isPremium = _user.isPremium;
+        view.emojiStatusDocumentId = _user.emojiStatusDocumentId;
     }
 }
 
@@ -317,7 +322,8 @@
 {
     if ([self boundView] != nil && _updatingAvatar != nil && uri != nil)
     {
-        [[TGRemoteImageView sharedCache] cacheImage:_updatingAvatar withData:nil url:[[NSString alloc] initWithFormat:@"{filter:circle:64x64}%@", uri] availability:TGCacheMemory];
+        NSString *filter = [TGPresentation classicIOS6Style] ? @"avatar64" : @"circle:64x64";
+        [[TGRemoteImageView sharedCache] cacheImage:_updatingAvatar withData:nil url:[[NSString alloc] initWithFormat:@"{filter:%@}%@", filter, uri] availability:TGCacheMemory];
     }
 }
 

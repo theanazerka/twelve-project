@@ -1339,6 +1339,16 @@ static UIImage *TGIOS6RoundReactionButtonImage(NSString *emoji, NSInteger count,
 {
     if (_mediaIsAvailable)
     {
+        // Some restored messages report availability before the legacy video
+        // cache has been materialized. Treat those exactly like a download
+        // button instead of swallowing the tap on a blank white circle.
+        NSString *videoPath = [TGVideoDownloadActor localPathForVideoUrl:[_video.videoInfo urlWithQuality:0 actualQuality:NULL actualSize:NULL]];
+        if (videoPath.length == 0 || ![[NSFileManager defaultManager] fileExistsAtPath:videoPath])
+        {
+            [_context.companionHandle requestAction:@"mediaDownloadRequested" options:@{@"mid": @(_mid), @"peerId": @(_authorPeerId)}];
+            return;
+        }
+
         if (_status != nil && !_status.paused)
         {
             if (_context.pauseAudioMessage)
@@ -1360,6 +1370,10 @@ static UIImage *TGIOS6RoundReactionButtonImage(NSString *emoji, NSInteger count,
             
             _playing = true;
         }
+    }
+    else
+    {
+        [_context.companionHandle requestAction:@"mediaDownloadRequested" options:@{@"mid": @(_mid), @"peerId": @(_authorPeerId)}];
     }
 }
 

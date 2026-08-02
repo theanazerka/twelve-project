@@ -9,6 +9,7 @@
 #import "TGModernLetteredAvatarViewModel.h"
 
 #import "TGModernLetteredAvatarView.h"
+#import "TGPresentation.h"
 
 @interface TGModernLetteredAvatarViewModel ()
 {
@@ -37,7 +38,13 @@
         _fontSize = 16.0f;
         _size = size;
         _placeholder = placeholder;
-        _filter = [[NSString alloc] initWithFormat:@"circle:%dx%d", (int)_size.width, (int)_size.height];
+        // Sender avatars in group messages are 38 pt. Keep them aligned with
+        // the rest of the iOS 6 appearance instead of applying a circular
+        // remote-image filter.
+        if ([TGPresentation classicIOS6Style] && CGSizeEqualToSize(_size, CGSizeMake(38.0f, 38.0f)))
+            _filter = @"conversationAvatar";
+        else
+            _filter = [[NSString alloc] initWithFormat:@"circle:%dx%d", (int)_size.width, (int)_size.height];
     }
     return self;
 }

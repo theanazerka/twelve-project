@@ -62,6 +62,13 @@
     return false;
 }
 
+- (NSString *)author
+{
+    // TGGenericPeerGalleryItem consumers query this optional display name
+    // when authorPeer is unavailable.
+    return nil;
+}
+
 - (Class)viewClass
 {
     return [TGGenericPeerMediaGalleryGifItemView class];

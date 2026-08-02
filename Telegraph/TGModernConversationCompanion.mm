@@ -120,6 +120,21 @@ static bool isMessageQueue()
     return [messageQueue() isCurrentQueue];
 }
 
+// Telegram links should be handled by the in-app resolver before the generic
+// "Open in…" menu gets a chance to send them to Safari.
+static bool TGIsInternalTelegramLink(NSString *urlString)
+{
+    if (![urlString isKindOfClass:[NSString class]] || urlString.length == 0)
+        return false;
+
+    NSURL *url = [NSURL URLWithString:urlString];
+    if (url.scheme.length == 0)
+        url = [NSURL URLWithString:[@"https://" stringByAppendingString:urlString]];
+
+    NSString *host = [url.host lowercaseString];
+    return [host isEqualToString:@"t.me"] || [host isEqualToString:@"telegram.me"];
+}
+
 static void dispatchOnMessageQueue(dispatch_block_t block, bool synchronous)
 {
     if (synchronous) {
@@ -2772,6 +2787,19 @@ static void dispatchOnMessageQueue(dispatch_block_t block, bool synchronous)
         }
         else
         {
+            // TGApplication converts t.me and telegram.me links to tg://resolve,
+            // tg://join, sticker-pack and proxy actions. Do this before the
+            // generic open-in menu, which otherwise opens the unsupported web page.
+            if (TGIsInternalTelegramLink(options[@"url"]))
+            {
+                NSURL *url = [NSURL URLWithString:options[@"url"]];
+                if (url != nil)
+                {
+                    [(TGApplication *)[UIApplication sharedApplication] openURL:url forceNative:true keepStack:true];
+                    return;
+                }
+            }
+
             if (![options[@"hidden"] boolValue] && [self _presentOpenInMenuForUrlString:options[@"url"]])
                 return;
 

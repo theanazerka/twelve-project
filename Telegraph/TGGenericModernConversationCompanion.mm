@@ -48,31 +48,6 @@
 #import "TGPreparedAssetVideoMessage.h"
 #import "TGPreparedDownloadExternalDocumentMessage.h"
 
-@interface TGIOS6TranscribeAudioRpc : TLMetaRpc
-@property (nonatomic, strong) TLInputPeer *peer;
-@property (nonatomic) int32_t messageId;
-@end
-
-@implementation TGIOS6TranscribeAudioRpc
-- (Class)responseClass { return [NSObject class]; }
-- (int)impliedResponseSignature { return (int)0xcfb9d957; }
-- (int)layerVersion { return 158; }
-- (int32_t)TLconstructorSignature { return (int32_t)0x269e9a49; }
-- (int32_t)TLconstructorName { return 0; }
-- (id<TLObject>)TLbuildFromMetaObject:(std::shared_ptr<TLMetaObject>)__unused metaObject { return nil; }
-- (void)TLfillFieldsWithValues:(std::map<int32_t, TLConstructedValue> *)values
-{
-    TLConstructedValue peerValue;
-    peerValue.type = TLConstructedValueTypeObject;
-    peerValue.nativeObject = self.peer;
-    values->insert(std::pair<int32_t, TLConstructedValue>((int32_t)0x9344c37d, peerValue));
-    TLConstructedValue messageValue;
-    messageValue.type = TLConstructedValueTypePrimitiveInt32;
-    messageValue.primitive.int32Value = self.messageId;
-    values->insert(std::pair<int32_t, TLConstructedValue>((int32_t)0xf1cc383f, messageValue));
-}
-@end
-
 static inline bool TGIOS6ConversationPeerIdLooksLikeModernRawChannel(int64_t peerId)
 {
     return peerId <= ((int64_t)INT32_MIN) * 3 && peerId > ((int64_t)INT32_MIN) * 4;
@@ -82,6 +57,15 @@ static inline bool TGIOS6ConversationPeerIdIsModernRawChannel(int64_t peerId)
 {
     return TGIOS6ConversationPeerIdLooksLikeModernRawChannel(peerId) && [TGDatabaseInstance() loadConversationWithId:peerId] != nil;
 }
+
+static NSString *TGGroqApiKeyDefaultsKey(void)
+{
+    int32_t userId = TGTelegraphInstance.clientUserId;
+    return userId != 0 ? [NSString stringWithFormat:@"TGGroqAPIKey.%d", userId] : @"TGGroqAPIKey";
+}
+
+// Replace the hostname with the workers.dev URL printed by `wrangler deploy`.
+static NSString * const TGIOS6GroqTranscriptionURL = @"https://twelvium-groq-transcribe.lkola2715.workers.dev";
 
 static inline bool TGIOS6ConversationPeerIdIsChannelLike(int64_t peerId)
 {
@@ -5167,34 +5151,164 @@ static NSArray *TGIOS6MessageEntitiesForPart(NSArray *entities, NSRange partRang
         int32_t mid = [options[@"mid"] intValue];
         int64_t peerId = [options[@"peerId"] longLongValue];
         int attempt = [options[@"attempt"] intValue];
+        TGLog(@"IOS6TRANSCRIBE requested mid=%d peer=%lld attempt=%d", mid, (long long)peerId, attempt);
         if (mid == 0 || peerId == 0 || TGPeerIdIsSecretChat(peerId))
             return;
 
-        TGConversation *conversation = [TGDatabaseInstance() loadConversationWithId:peerId];
-        if (conversation == nil)
+        NSString *apiKey = [[NSUserDefaults standardUserDefaults] stringForKey:TGGroqApiKeyDefaultsKey()];
+        if (apiKey.length == 0)
+        {
+            TGLog(@"IOS6TRANSCRIBE missing API key");
+            dispatch_async(dispatch_get_main_queue(), ^
+            {
+                [[[UIAlertView alloc] initWithTitle:@"Groq API key required" message:@"Set your key in Settings → Groq transcription API key." delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil] show];
+            });
             return;
-        TGIOS6TranscribeAudioRpc *rpc = [[TGIOS6TranscribeAudioRpc alloc] init];
-        rpc.peer = [TGTelegraphInstance createInputPeerForConversation:peerId accessHash:conversation.accessHash];
-        rpc.messageId = mid;
+        }
+
+        TGMessage *message = nil;
+        for (TGMessageModernConversationItem *item in _items)
+        {
+            if (item->_message.mid == mid && item->_message.cid == peerId)
+            {
+                message = item->_message;
+                break;
+            }
+        }
+        if (message == nil)
+            return;
+
+        NSString *existingText = message.contentProperties[@"ios6Transcription"];
+        if (existingText.length != 0)
+        {
+            TGMessage *updatedMessage = [message copy];
+            NSMutableDictionary *properties = [updatedMessage.contentProperties mutableCopy] ?: [[NSMutableDictionary alloc] init];
+            [properties removeObjectForKey:@"ios6Transcription"];
+            [properties removeObjectForKey:@"ios6TranscriptionPending"];
+            updatedMessage.contentProperties = properties;
+            [self updateMessagesLive:@{@(mid): updatedMessage} animated:false];
+            return;
+        }
+
+        TGMessage *pendingMessage = [message copy];
+        NSMutableDictionary *pendingProperties = [pendingMessage.contentProperties mutableCopy] ?: [[NSMutableDictionary alloc] init];
+        pendingProperties[@"ios6TranscriptionPending"] = @true;
+        pendingMessage.contentProperties = pendingProperties;
+        [self updateMessagesLive:@{@(mid): pendingMessage} animated:false];
+
+        NSData *audioData = nil;
+        for (id attachment in message.mediaAttachments)
+        {
+            NSString *path = nil;
+            if ([attachment isKindOfClass:[TGAudioMediaAttachment class]])
+                path = [(TGAudioMediaAttachment *)attachment localFilePath];
+            else if ([attachment isKindOfClass:[TGDocumentMediaAttachment class]])
+            {
+                TGDocumentMediaAttachment *document = attachment;
+                NSString *directory = document.documentId != 0 ? [TGPreparedLocalDocumentMessage localDocumentDirectoryForDocumentId:document.documentId version:document.version] : [TGPreparedLocalDocumentMessage localDocumentDirectoryForLocalDocumentId:document.localDocumentId version:document.version];
+                path = [directory stringByAppendingPathComponent:[document safeFileName]];
+            }
+            if (path.length != 0)
+            {
+                audioData = [NSData dataWithContentsOfFile:path options:NSDataReadingMappedIfSafe error:nil];
+                if (audioData.length != 0)
+                    break;
+            }
+        }
+        if (audioData.length == 0)
+        {
+            for (TGMessageModernConversationItem *item in _items)
+            {
+                if (item->_message.mid == mid && item->_message.cid == peerId)
+                {
+                    [self _downloadMediaInMessage:item->_message highPriority:true];
+                    break;
+                }
+            }
+            if (attempt < 4)
+            {
+                __weak TGGenericModernConversationCompanion *weakSelf = self;
+                TGDispatchAfter(2.0, dispatch_get_main_queue(), ^
+                {
+                    __strong TGGenericModernConversationCompanion *strongSelf = weakSelf;
+                    if (strongSelf != nil)
+                        [strongSelf.actionHandle requestAction:@"transcribeAudioRequested" options:@{@"mid": @(mid), @"peerId": @(peerId), @"attempt": @(attempt + 1)}];
+                });
+            }
+            else
+            {
+                TGLog(@"IOS6TRANSCRIBE media unavailable mid=%d", mid);
+                NSMutableDictionary *properties = [message.contentProperties mutableCopy] ?: [[NSMutableDictionary alloc] init];
+                [properties removeObjectForKey:@"ios6TranscriptionPending"];
+                TGMessage *updatedMessage = [message copy];
+                updatedMessage.contentProperties = properties;
+                [self updateMessagesLive:@{@(mid): updatedMessage} animated:false];
+            }
+            return;
+        }
+
+        NSString *boundary = [[NSUUID UUID] UUIDString];
+        NSMutableData *body = [[NSMutableData alloc] init];
+        NSString *prefix = [NSString stringWithFormat:@"--%@\r\nContent-Disposition: form-data; name=\"file\"; filename=\"voice.ogg\"\r\nContent-Type: audio/ogg\r\n\r\n", boundary];
+        [body appendData:[prefix dataUsingEncoding:NSUTF8StringEncoding]];
+        [body appendData:audioData];
+        NSString *suffix = [NSString stringWithFormat:@"\r\n--%@\r\nContent-Disposition: form-data; name=\"model\"\r\n\r\nwhisper-large-v3-turbo\r\n--%@\r\nContent-Disposition: form-data; name=\"response_format\"\r\n\r\njson\r\n--%@--\r\n", boundary, boundary, boundary];
+        [body appendData:[suffix dataUsingEncoding:NSUTF8StringEncoding]];
+
+        NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:[NSURL URLWithString:TGIOS6GroqTranscriptionURL]];
+        request.HTTPMethod = @"POST";
+        request.timeoutInterval = 45.0;
+        [request setValue:apiKey forHTTPHeaderField:@"X-Groq-Key"];
+        [request setValue:[NSString stringWithFormat:@"multipart/form-data; boundary=%@", boundary] forHTTPHeaderField:@"Content-Type"];
+        request.HTTPBody = body;
 
         __weak TGGenericModernConversationCompanion *weakSelf = self;
-        [[[TGTelegramNetworking instance] requestSignal:rpc] startWithNext:^(id result)
+        [NSURLConnection sendAsynchronousRequest:request queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse *response, NSData *data, NSError *error)
         {
             __strong TGGenericModernConversationCompanion *strongSelf = weakSelf;
+            bool requestFailed = error != nil || ![(NSHTTPURLResponse *)response isKindOfClass:[NSHTTPURLResponse class]] || [(NSHTTPURLResponse *)response statusCode] < 200 || [(NSHTTPURLResponse *)response statusCode] >= 300;
             if (strongSelf == nil)
                 return;
-            bool pending = [[result valueForKey:@"pending"] boolValue];
-            NSString *text = [result valueForKey:@"text"];
-            if (pending && attempt < 12)
+            if (requestFailed)
             {
-                TGDispatchAfter(1.0, dispatch_get_main_queue(), ^
+                TGLog(@"IOS6TRANSCRIBE request failed status=%ld error=%@", (long)[(NSHTTPURLResponse *)response statusCode], error);
+                [TGModernConversationCompanion dispatchOnMessageQueue:^
                 {
-                    [strongSelf.actionHandle requestAction:@"transcribeAudioRequested" options:@{@"mid": @(mid), @"peerId": @(peerId), @"attempt": @(attempt + 1)}];
-                });
+                    for (TGMessageModernConversationItem *item in strongSelf->_items)
+                    {
+                        if (item->_message.mid != mid || item->_message.cid != peerId)
+                            continue;
+                        TGMessage *updatedMessage = [item->_message copy];
+                        NSMutableDictionary *properties = [updatedMessage.contentProperties mutableCopy] ?: [[NSMutableDictionary alloc] init];
+                        [properties removeObjectForKey:@"ios6TranscriptionPending"];
+                        updatedMessage.contentProperties = properties;
+                        [strongSelf updateMessagesLive:@{@(mid): updatedMessage} animated:false];
+                        break;
+                    }
+                }];
                 return;
             }
+            NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
+            NSString *text = [json[@"text"] isKindOfClass:[NSString class]] ? json[@"text"] : nil;
             if (text.length == 0)
+            {
+                TGLog(@"IOS6TRANSCRIBE empty response");
+                [TGModernConversationCompanion dispatchOnMessageQueue:^{
+                    for (TGMessageModernConversationItem *item in strongSelf->_items)
+                    {
+                        if (item->_message.mid != mid || item->_message.cid != peerId)
+                            continue;
+                        TGMessage *updatedMessage = [item->_message copy];
+                        NSMutableDictionary *properties = [updatedMessage.contentProperties mutableCopy] ?: [[NSMutableDictionary alloc] init];
+                        [properties removeObjectForKey:@"ios6TranscriptionPending"];
+                        updatedMessage.contentProperties = properties;
+                        [strongSelf updateMessagesLive:@{@(mid): updatedMessage} animated:false];
+                        break;
+                    }
+                }];
                 return;
+            }
+            TGLog(@"IOS6TRANSCRIBE completed mid=%d", mid);
             [TGModernConversationCompanion dispatchOnMessageQueue:^
             {
                 for (TGMessageModernConversationItem *item in strongSelf->_items)
@@ -5204,12 +5318,13 @@ static NSArray *TGIOS6MessageEntitiesForPart(NSArray *entities, NSRange partRang
                     TGMessage *updatedMessage = [item->_message copy];
                     NSMutableDictionary *properties = [updatedMessage.contentProperties mutableCopy] ?: [[NSMutableDictionary alloc] init];
                     properties[@"ios6Transcription"] = text;
+                    [properties removeObjectForKey:@"ios6TranscriptionPending"];
                     updatedMessage.contentProperties = properties;
                     [strongSelf updateMessagesLive:@{@(mid): updatedMessage} animated:false];
                     break;
                 }
             }];
-        } error:nil completed:nil];
+        }];
     }
     else if ([action isEqualToString:@"mediaProgressCancelRequested"])
     {

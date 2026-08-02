@@ -21,8 +21,24 @@ static NSString *modernPeerPhotoUrl(int32_t dcId, int32_t peerType, int64_t peer
     return [[NSString alloc] initWithFormat:@"peerphoto:%d:%d:%lld:%lld:%lld:%d", dcId, peerType, peerId, accessHash, photoId, big ? 1 : 0];
 }
 
+static NSString *TwelviumTelegramSupportAvatarUri(void)
+{
+    return @"placeholder://?type=telegram-support&w=412&h=412";
+}
+
 void extractUserPhoto(TLUserProfilePhoto *photo, TGUser *target)
 {
+    // The official Telegram service account keeps a bundled, deterministic
+    // avatar so it is still recognizable when old MTProto photo loading fails.
+    if (target.uid == 42777)
+    {
+        NSString *avatarUri = TwelviumTelegramSupportAvatarUri();
+        target.photoUrlSmall = avatarUri;
+        target.photoUrlMedium = avatarUri;
+        target.photoUrlBig = avatarUri;
+        return;
+    }
+
     if ([photo isKindOfClass:[TLUserProfilePhoto$userProfilePhoto class]])
     {
         TLUserProfilePhoto$userProfilePhoto *profilePhoto = (TLUserProfilePhoto$userProfilePhoto *)photo;
@@ -189,6 +205,7 @@ int extractUserLinkFromUpdate(TLUpdate$updateContactLink *linkUpdate)
             self.botInfoVersion = concreteUser.bot_info_version;
             
             self.isVerified = concreteUser.flags & (1 << 17);
+            self.isPremium = concreteUser.flags & (1 << 28);
             self.hasExplicitContent = concreteUser.flags & (1 << 18);
             self.restrictionReason = concreteUser.restriction_reason;
             self.contextBotPlaceholder = concreteUser.inlineBotPlaceholder;
